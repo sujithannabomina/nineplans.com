@@ -3,85 +3,69 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useSession, signOut } from "next-auth/react";
+import { useState } from "react";
 import MobileBar from "./MobileBar";
 
 export default function Navbar() {
-  const { data: session } = useSession();
+  const [open, setOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-50 border-b border-zinc-900 bg-black/80 backdrop-blur">
-      <div className="mx-auto flex h-14 max-w-6xl items-center gap-3 px-3">
-        {/* Mobile menu */}
-        <div className="lg:hidden">
-          <MobileBar />
-        </div>
-
-        {/* Logo + Brand */}
-        <Link href="/" className="flex items-center gap-2">
-          <Image
-            src="/logo-circle-1024.png"
-            alt="NinePlans"
-            width={28}
-            height={28}
-            className="rounded-full"
-            priority
-          />
-          <span className="hidden text-sm font-semibold tracking-wide sm:inline">
-            NINEPLANS
-          </span>
-        </Link>
-
-        {/* Primary nav */}
-        <nav className="ml-auto hidden items-center gap-6 lg:flex">
-          <Link href="/" className="text-sm text-zinc-200 hover:text-white">
-            Home
-          </Link>
-          <Link href="/submit" className="text-sm text-zinc-200 hover:text-white">
-            Submit
-          </Link>
-          <Link href="/top" className="text-sm text-zinc-200 hover:text-white">
-            Top
-          </Link>
-          <Link href="/search" className="text-sm text-zinc-200 hover:text-white">
-            Search
-          </Link>
-        </nav>
-
-        {/* Auth pill */}
-        <div className="ml-2">
-          {session ? (
-            <div className="flex items-center gap-2">
-              <Link
-                href="/profile"
-                className="hidden rounded-full border border-zinc-800 px-3 py-1 text-sm hover:bg-zinc-900 sm:inline"
-              >
-                {session.user?.name ?? "Profile"}
-              </Link>
-              <button
-                onClick={() => signOut({ callbackUrl: "/" })}
-                className="rounded-full border border-zinc-800 px-3 py-1 text-sm hover:bg-zinc-900"
-              >
-                Logout
-              </button>
+    <>
+      <header className="sticky top-0 z-40 w-full border-b border-white/10 bg-black/80 backdrop-blur">
+        <div className="mx-auto flex max-w-7xl items-center gap-3 px-3 lg:px-4 h-16">
+          {/* Hamburger (mobile only) */}
+          <button
+            aria-label="Open menu"
+            className="lg:hidden rounded-md p-2 text-zinc-300 hover:bg-white/10"
+            onClick={() => setOpen(true)}
+          >
+            {/* simple icon */}
+            <div className="space-y-1">
+              <span className="block h-0.5 w-5 bg-current" />
+              <span className="block h-0.5 w-5 bg-current" />
+              <span className="block h-0.5 w-5 bg-current" />
             </div>
-          ) : (
-            <Link
-              href="/login"
-              className="rounded-full border border-zinc-800 px-3 py-1 text-sm hover:bg-zinc-900"
-            >
-              Login
-            </Link>
-          )}
-        </div>
-      </div>
+          </button>
 
-      {/* Single banner (removed duplicate below the bar) */}
-      <div className="border-t border-zinc-900 bg-zinc-950/50 text-center text-xs text-zinc-400">
-        <div className="mx-auto max-w-6xl px-3 py-2">
-          You can write confessions anonymously, even when you&apos;re logged in.
+          {/* Logo */}
+          <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/logo-circle-1024.png"
+              alt="NinePlans"
+              width={28}
+              height={28}
+              className="rounded-full"
+              priority
+            />
+            <span className="hidden sm:block text-sm font-semibold tracking-wide">
+              NINEPLANS
+            </span>
+          </Link>
+
+          {/* Primary nav */}
+          <nav className="ml-auto hidden md:flex items-center gap-2 text-sm">
+            <NavLink href="/">Home</NavLink>
+            <NavLink href="/submit">Submit</NavLink>
+            <NavLink href="/top">Top</NavLink>
+            <NavLink href="/search">Search</NavLink>
+            {/* Keep your existing login/avatar component on the far right if you have it */}
+          </nav>
         </div>
-      </div>
-    </header>
+      </header>
+
+      {/* Mobile drawer */}
+      <MobileBar open={open} onClose={() => setOpen(false)} />
+    </>
+  );
+}
+
+function NavLink({ href, children }) {
+  return (
+    <Link
+      href={href}
+      className="rounded-md px-3 py-2 text-zinc-300 hover:text-white hover:bg-white/10"
+    >
+      {children}
+    </Link>
   );
 }

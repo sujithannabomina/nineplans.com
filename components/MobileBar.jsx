@@ -1,110 +1,84 @@
 // components/MobileBar.jsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
-import { CATEGORIES } from "@/lib/site";
+import { CATEGORIES, STATIC_LINKS, categoryHref } from "@/lib/site";
 
-export default function MobileBar() {
-  const [open, setOpen] = useState(false);
-
-  // Close drawer on route change if you decide to read router events later.
+export default function MobileBar({ open, onClose }) {
+  // lock body scroll when menu open
   useEffect(() => {
     if (!open) return;
-    const onEsc = (e) => e.key === "Escape" && setOpen(false);
-    window.addEventListener("keydown", onEsc);
-    return () => window.removeEventListener("keydown", onEsc);
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => (document.body.style.overflow = prev);
   }, [open]);
 
+  if (!open) return null;
+
   return (
-    <>
+    <div className="fixed inset-0 z-50 lg:hidden">
       <button
-        aria-label="Open menu"
-        className="lg:hidden rounded-md border border-zinc-800 px-3 py-2 text-sm hover:bg-zinc-900"
-        onClick={() => setOpen(true)}
-      >
-        ☰
-      </button>
-
-      {open && (
-        <div className="fixed inset-0 z-[60] lg:hidden">
-          {/* Backdrop */}
+        aria-label="Close menu"
+        className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+        onClick={onClose}
+      />
+      <aside className="absolute left-0 top-0 h-full w-80 bg-zinc-950 border-r border-white/10 shadow-xl">
+        <div className="flex items-center justify-between px-4 h-14 border-b border-white/10">
+          <span className="text-sm font-semibold">Menu</span>
           <button
-            className="absolute inset-0 bg-black/60"
-            onClick={() => setOpen(false)}
-            aria-label="Close menu"
-          />
-
-          {/* Panel */}
-          <div className="absolute left-0 top-0 h-full w-[88%] max-w-xs overflow-y-auto border-r border-zinc-800 bg-zinc-950 p-4 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <span className="text-lg font-semibold">Menu</span>
-              <button
-                className="rounded-md border border-zinc-700 px-2 py-1 text-sm"
-                onClick={() => setOpen(false)}
-              >
-                Close
-              </button>
-            </div>
-
-            <nav className="space-y-1">
-              <Link
-                href="/"
-                className="block rounded-md px-3 py-2 text-sm hover:bg-zinc-900"
-                onClick={() => setOpen(false)}
-              >
-                Home
-              </Link>
-              <Link
-                href="/submit"
-                className="block rounded-md px-3 py-2 text-sm hover:bg-zinc-900"
-                onClick={() => setOpen(false)}
-              >
-                Submit
-              </Link>
-              <Link
-                href="/top"
-                className="block rounded-md px-3 py-2 text-sm hover:bg-zinc-900"
-                onClick={() => setOpen(false)}
-              >
-                Top
-              </Link>
-              <Link
-                href="/search"
-                className="block rounded-md px-3 py-2 text-sm hover:bg-zinc-900"
-                onClick={() => setOpen(false)}
-              >
-                Search
-              </Link>
-            </nav>
-
-            <div className="my-4 h-px bg-zinc-800" />
-
-            <div>
-              <div className="mb-2 px-2 text-xs uppercase tracking-wide text-zinc-400">
-                Categories
-              </div>
-              <ul className="space-y-1">
-                {CATEGORIES.map((c) => (
-                  <li key={c}>
-                    <Link
-                      href={`/post?cat=${encodeURIComponent(c)}`}
-                      className="block rounded-md px-3 py-2 text-sm hover:bg-zinc-900"
-                      onClick={() => setOpen(false)}
-                    >
-                      {c}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            <div className="mt-6 text-center text-xs text-zinc-500">
-              © {new Date().getFullYear()} NinePlans
-            </div>
-          </div>
+            onClick={onClose}
+            className="rounded-md px-2 py-1 text-zinc-300 hover:bg-white/10"
+          >
+            Close
+          </button>
         </div>
-      )}
-    </>
+
+        <div className="h-[calc(100%-3.5rem)] overflow-y-auto pb-6">
+          <Section title="Categories">
+            <ul className="space-y-1">
+              {CATEGORIES.map((name) => (
+                <li key={name}>
+                  <Link
+                    href={categoryHref(name)}
+                    onClick={onClose}
+                    className="block rounded-md px-4 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5"
+                  >
+                    {name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Section>
+
+          <Section title="Pages">
+            <ul className="space-y-1">
+              {STATIC_LINKS.map((l) => (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    onClick={onClose}
+                    className="block rounded-md px-4 py-2 text-sm text-zinc-300 hover:text-white hover:bg-white/5"
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </Section>
+        </div>
+      </aside>
+    </div>
+  );
+}
+
+function Section({ title, children }) {
+  return (
+    <div className="pt-3">
+      <div className="px-4 pb-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
+        {title}
+      </div>
+      {children}
+    </div>
   );
 }
