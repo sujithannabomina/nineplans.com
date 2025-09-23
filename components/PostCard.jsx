@@ -1,171 +1,60 @@
-<<<<<<< HEAD
 // components/PostCard.jsx
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
-import { toggleLike, toggleSave } from "@/lib/db";
 
-function timeAgo(ts) {
-  const num = typeof ts === "number" ? ts : ts?.toMillis?.() ?? Date.now();
-  const s = Math.floor((Date.now() - num) / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60); if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60); if (h < 24) return `${h}h`;
-  const d = Math.floor(h / 24); return `${d}d`;
-}
+/**
+ * Displays a single post card.
+ * Expects a "post" object with at least { id, title, category }.
+ * All other fields are optional and handled defensively.
+ */
+export default function PostCard({ post }) {
+  if (!post) return null;
 
-export default function PostCard({ post, currentUser }) {
-  // post: { id, title, body, images[], category, createdAt, authorId,
-  //         displayName, identityMode: "real" | "alias",
-  //         counts: { likes, comments, saves } }
-  const [likes, setLikes] = useState(post?.counts?.likes || 0);
-  const [saves, setSaves] = useState(post?.counts?.saves || 0);
-  const [liking, setLiking] = useState(false);
-  const [saving, setSaving] = useState(false);
+  const id = post.id ?? post.slug ?? "";
+  const href = id ? `/post/${encodeURIComponent(id)}` : "#";
 
-  const canLinkProfile = post.identityMode !== "alias" && post.authorId;
-  const authorEl = useMemo(() => {
-    if (!post.displayName) return <span>Unknown</span>;
-    if (!canLinkProfile) return <span>{post.displayName}</span>;
-    return <Link href={`/profile?u=${post.authorId}`} className="underline">{post.displayName}</Link>;
-  }, [post.displayName, canLinkProfile, post.authorId]);
+  const title = String(post.title ?? "Untitled");
+  const category = String(post.category ?? "General");
 
-  const url = `/post/${post.id}`;
+  const snippet = String(post.body ?? post.text ?? "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, 240);
 
-  const onLike = async () => {
-    try { setLiking(true); setLikes(v => v + 1); await toggleLike(post.id); }
-    catch { setLikes(v => Math.max(0, v - 1)); }
-    finally { setLiking(false); }
-  };
-
-  const onSave = async () => {
-    try { setSaving(true); setSaves(v => v + 1); await toggleSave(post.id); }
-    catch { setSaves(v => Math.max(0, v - 1)); }
-    finally { setSaving(false); }
-  };
-
-  const onShare = async () => {
-    const absolute = `${window.location.origin}${url}`;
-    try { await navigator.clipboard.writeText(absolute); alert("Link copied!"); } catch {}
-  };
+  const likes = Number(post.likes ?? 0);
+  const comments = Number(post.commentsCount ?? post.comments ?? 0);
+  const views = Number(post.views ?? 0);
 
   return (
-    <article className="border border-white/15 rounded-xl p-4 mb-4 bg-black">
-      <header className="flex items-center justify-between text-sm mb-2">
-        <div className="opacity-90">
-          {authorEl} • <span className="opacity-70">{timeAgo(post.createdAt)}</span>
-          {post.category ? <span className="ml-2 px-2 py-0.5 text-xs border border-white/20 rounded">{post.category}</span> : null}
-          {post.identityMode === "alias" ? <span className="ml-2 text-xs opacity-60">(alias)</span> : null}
-        </div>
-      </header>
+    <article className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4">
+      <div className="mb-2 flex flex-wrap items-center gap-2 text-xs text-zinc-400">
+        <span className="rounded border border-zinc-700 px-2 py-0.5">
+          {category}
+        </span>
+        <span>👍 {likes}</span>
+        <span>💬 {comments}</span>
+        <span>👁️ {views}</span>
+      </div>
 
-      <Link href={url} className="block group">
-        {post.title ? <h2 className="text-lg font-semibold mb-2 group-hover:underline">{post.title}</h2> : null}
-        {post.body ? <p className="whitespace-pre-line opacity-95">{post.body.slice(0, 280)}{post.body.length > 280 ? "…" : ""}</p> : null}
-        {!!post.images?.length && (
-          <div className="grid grid-cols-2 gap-2 mt-3">
-            {post.images.slice(0, 4).map((src, i) => (
-              <img key={i} src={src} alt="" className="w-full rounded-lg border border-white/10" />
-            ))}
-          </div>
-        )}
-      </Link>
+      <h3 className="mb-2 text-lg font-semibold leading-snug">
+        <Link href={href} className="hover:underline">
+          {title}
+        </Link>
+      </h3>
 
-      <footer className="flex items-center gap-4 mt-4 text-sm">
-        <button onClick={onLike} disabled={liking} className="px-3 py-1 rounded bg-white text-black">
-          ▲ Like {likes ? `(${likes})` : ""}
-        </button>
-        <Link href={url} className="px-3 py-1 rounded border border-white/20">💬 Comment {post?.counts?.comments ? `(${post.counts.comments})` : ""}</Link>
-        <button onClick={onSave} disabled={saving} className="px-3 py-1 rounded border border-white/20">🔖 Save {saves ? `(${saves})` : ""}</button>
-        <button onClick={onShare} className="ml-auto underline">Share</button>
-      </footer>
+      {snippet && (
+        <p className="mb-3 text-sm leading-relaxed text-zinc-300">{snippet}</p>
+      )}
+
+      <div>
+        <Link
+          href={href}
+          className="inline-block rounded-md border border-zinc-700 px-3 py-1 text-sm hover:bg-zinc-900"
+        >
+          Read more
+        </Link>
+      </div>
     </article>
   );
 }
-=======
-// components/PostCard.jsx
-"use client";
-
-import Link from "next/link";
-import { useMemo, useState } from "react";
-import { toggleLike, toggleSave } from "@/lib/db";
-
-function timeAgo(ts) {
-  const num = typeof ts === "number" ? ts : ts?.toMillis?.() ?? Date.now();
-  const s = Math.floor((Date.now() - num) / 1000);
-  if (s < 60) return `${s}s`;
-  const m = Math.floor(s / 60); if (m < 60) return `${m}m`;
-  const h = Math.floor(m / 60); if (h < 24) return `${h}h`;
-  const d = Math.floor(h / 24); return `${d}d`;
-}
-
-export default function PostCard({ post, currentUser }) {
-  // post: { id, title, body, images[], category, createdAt, authorId,
-  //         displayName, identityMode: "real" | "alias",
-  //         counts: { likes, comments, saves } }
-  const [likes, setLikes] = useState(post?.counts?.likes || 0);
-  const [saves, setSaves] = useState(post?.counts?.saves || 0);
-  const [liking, setLiking] = useState(false);
-  const [saving, setSaving] = useState(false);
-
-  const canLinkProfile = post.identityMode !== "alias" && post.authorId;
-  const authorEl = useMemo(() => {
-    if (!post.displayName) return <span>Unknown</span>;
-    if (!canLinkProfile) return <span>{post.displayName}</span>;
-    return <Link href={`/profile?u=${post.authorId}`} className="underline">{post.displayName}</Link>;
-  }, [post.displayName, canLinkProfile, post.authorId]);
-
-  const url = `/post/${post.id}`;
-
-  const onLike = async () => {
-    try { setLiking(true); setLikes(v => v + 1); await toggleLike(post.id); }
-    catch { setLikes(v => Math.max(0, v - 1)); }
-    finally { setLiking(false); }
-  };
-
-  const onSave = async () => {
-    try { setSaving(true); setSaves(v => v + 1); await toggleSave(post.id); }
-    catch { setSaves(v => Math.max(0, v - 1)); }
-    finally { setSaving(false); }
-  };
-
-  const onShare = async () => {
-    const absolute = `${window.location.origin}${url}`;
-    try { await navigator.clipboard.writeText(absolute); alert("Link copied!"); } catch {}
-  };
-
-  return (
-    <article className="border border-white/15 rounded-xl p-4 mb-4 bg-black">
-      <header className="flex items-center justify-between text-sm mb-2">
-        <div className="opacity-90">
-          {authorEl} • <span className="opacity-70">{timeAgo(post.createdAt)}</span>
-          {post.category ? <span className="ml-2 px-2 py-0.5 text-xs border border-white/20 rounded">{post.category}</span> : null}
-          {post.identityMode === "alias" ? <span className="ml-2 text-xs opacity-60">(alias)</span> : null}
-        </div>
-      </header>
-
-      <Link href={url} className="block group">
-        {post.title ? <h2 className="text-lg font-semibold mb-2 group-hover:underline">{post.title}</h2> : null}
-        {post.body ? <p className="whitespace-pre-line opacity-95">{post.body.slice(0, 280)}{post.body.length > 280 ? "…" : ""}</p> : null}
-        {!!post.images?.length && (
-          <div className="grid grid-cols-2 gap-2 mt-3">
-            {post.images.slice(0, 4).map((src, i) => (
-              <img key={i} src={src} alt="" className="w-full rounded-lg border border-white/10" />
-            ))}
-          </div>
-        )}
-      </Link>
-
-      <footer className="flex items-center gap-4 mt-4 text-sm">
-        <button onClick={onLike} disabled={liking} className="px-3 py-1 rounded bg-white text-black">
-          ▲ Like {likes ? `(${likes})` : ""}
-        </button>
-        <Link href={url} className="px-3 py-1 rounded border border-white/20">💬 Comment {post?.counts?.comments ? `(${post.counts.comments})` : ""}</Link>
-        <button onClick={onSave} disabled={saving} className="px-3 py-1 rounded border border-white/20">🔖 Save {saves ? `(${saves})` : ""}</button>
-        <button onClick={onShare} className="ml-auto underline">Share</button>
-      </footer>
-    </article>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
