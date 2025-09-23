@@ -1,87 +1,156 @@
-'use client';
+// components/SubmitClient.jsx
+"use client";
 
-import { useSearchParams } from 'next/navigation';
-import { CATEGORIES } from './CategoryLinks';
-import { useState, useMemo } from 'react';
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
+import { CATEGORIES } from "@/lib/site";
 
 export default function SubmitClient() {
-  const params = useSearchParams();
-  const initialCat = params.get('cat') || 'Confessions';
+  const router = useRouter();
+  const { data: session, status } = useSession();
 
-  const [category, setCategory] = useState(initialCat);
-  const [title, setTitle] = useState('');
-  const [body, setBody] = useState('');
+  const [postAs, setPostAs] = useState("Alias"); // "Real name" or "Alias"
+  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
 
-  const catOptions = useMemo(
-    () => ['Confessions', ...CATEGORIES.filter(c => c.name !== 'Confessions').map(c => c.name)],
-    []
-  );
+  // Precompute options once
+  const categoryOptions = useMemo(() => CATEGORIES, []);
+
+  // If user isn’t logged in, show the exact same page but with the form locked.
+  const isAuthed = status === "authenticated";
+
+  async function onSubmit(e) {
+    e.preventDefault();
+    if (!isAuthed) {
+      // Send the user to login and bring them back to /submit after
+      router.push("/login?returnTo=/submit");
+      return;
+    }
+
+    // Basic guard
+    if (!title.trim() || !body.trim() || !category) return;
+
+    try {
+      // If you already have a post API or Firestore write in another component,
+      // call that here. For now we post to /api/post if it exists.
+      const res = await fetch("/api/post", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title: title.trim(),
+          body: body.trim(),
+          category,
+          postAs, // "Alias" or "Real name"
+        }),
+      });
+
+      if (res.ok) {
+        // Go home (or to the new post) after successful submit
+        router.push("/");
+        router.refresh();
+      } else if (res.status === 401) {
+        router.push("/login?returnTo=/submit");
+      } else {
+        console.error(await res.text());
+        alert("Something went wrong while posting. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+      alert("Network error. Please try again.");
+    }
+  }
 
   return (
-    <div className="space-y-6">
-      <h1 className="text-2xl sm:text-3xl font-bold">Submit</h1>
-
-      <div className="grid gap-4 rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-        <div className="grid sm:grid-cols-3 gap-3">
-          <div className="sm:col-span-1">
-            <label className="text-sm text-zinc-400">Post as</label>
-            <select className="mt-1 w-full rounded border border-zinc-700 bg-black p-2 text-sm">
-              <option>Alias</option>
-              <option>Real name</option>
-            </select>
-          </div>
-
-          <div className="sm:col-span-2">
-            <label className="text-sm text-zinc-400">Category</label>
-            <select
-              className="mt-1 w-full rounded border border-zinc-700 bg-black p-2 text-sm"
-              value={category}
-              onChange={e => setCategory(e.target.value)}
-            >
-              {catOptions.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </div>
-        </div>
-
-        <div>
-          <label className="text-sm text-zinc-400">Title</label>
-          <input
-            className="mt-1 w-full rounded border border-zinc-700 bg-black p-2 text-sm"
-            placeholder="Keep it concise (max 140 chars)"
-            value={title}
-            onChange={e => setTitle(e.target.value)}
-            maxLength={140}
-          />
-        </div>
-
-        <div>
-          <label className="text-sm text-zinc-400">Your post</label>
-          <textarea
-            className="mt-1 h-48 w-full resize-y rounded border border-zinc-700 bg-black p-2 text-sm"
-            placeholder="Write your post. Links allowed. No images/videos in comments."
-            value={body}
-            onChange={e => setBody(e.target.value)}
-          />
-        </div>
-
-        <div className="text-sm text-zinc-400">
-          Images (up to 4): <span className="text-zinc-500">Coming soon</span>
-        </div>
-
-        <div>
-          <button
-            className="rounded-lg bg-white px-4 py-2 text-sm font-semibold text-black hover:opacity-90"
-            onClick={() => alert('Posting is not wired to a database yet. UI & auth are production-ready.')}
-          >
-            Post
-          </button>
-        </div>
-
-        <div className="text-xs text-zinc-500 space-y-1">
-          <div>• Posting as <b>Alias</b>. Set your alias in Profile → Settings.</div>
-          <div>• No images/videos in comments. Up to 4 images in a post.</div>
-        </div>
+    <form
+      onSubmit={onSubmit}
+      className="max-w-3xl space-y-6 rounded-xl border border-zinc-800 bg-zinc-950/50 p-5"
+    >
+      {/* Post as */}
+      <div className="grid gap-2">
+        <label className="text-sm font-medium text-zinc-300">Post as</label>
+        <select
+          value={postAs}
+          onChange={(e) => setPostAs(e.target.value)}
+          className="w-full rounded-md border border-zinc-800 bg-zinc-900 p-2 text-sm outline-none focus:ring-2 focus:ring-zinc-600"
+          disabled={!isAuthed}
+        >
+          <option>Real name</option>
+          <option>Alias</option>
+        </select>
+        {!isAuthed && (
+          <p className="text-xs text-zinc-400">
+            You’re not logged in. Posting requires login.
+          </p>
+        )}
       </div>
-    </div>
+
+      {/* Category */}
+      <div className="grid gap-2">
+        <label className="text-sm font-medium text-zinc-300">Category</label>
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          className="w-full rounded-md border border-zinc-800 bg-zinc-900 p-2 text-sm outline-none focus:ring-2 focus:ring-zinc-600"
+          disabled={!isAuthed}
+        >
+          {categoryOptions.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Title */}
+      <div className="grid gap-2">
+        <label className="text-sm font-medium text-zinc-300">
+          Title <span className="text-zinc-500">(max 140 chars)</span>
+        </label>
+        <input
+          value={title}
+          onChange={(e) => setTitle(e.target.value.slice(0, 140))}
+          placeholder="Keep it concise (max 140 chars)"
+          className="w-full rounded-md border border-zinc-800 bg-zinc-900 p-2 text-sm outline-none focus:ring-2 focus:ring-zinc-600"
+          disabled={!isAuthed}
+        />
+      </div>
+
+      {/* Body */}
+      <div className="grid gap-2">
+        <label className="text-sm font-medium text-zinc-300">Your post</label>
+        <textarea
+          value={body}
+          onChange={(e) => setBody(e.target.value)}
+          placeholder="Write your post. Links allowed. No images/videos in comments."
+          rows={8}
+          className="w-full resize-y rounded-md border border-zinc-800 bg-zinc-900 p-3 text-sm outline-none focus:ring-2 focus:ring-zinc-600"
+          disabled={!isAuthed}
+        />
+      </div>
+
+      {/* Images note */}
+      <p className="text-xs text-zinc-500">Images (up to 4): Coming soon</p>
+
+      {/* Post button or Login */}
+      {isAuthed ? (
+        <button
+          type="submit"
+          className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-zinc-200 disabled:cursor-not-allowed disabled:opacity-50"
+          disabled={!title.trim() || !body.trim()}
+        >
+          Post
+        </button>
+      ) : (
+        <button
+          type="button"
+          onClick={() => router.push("/login?returnTo=/submit")}
+          className="rounded-md bg-white px-4 py-2 text-sm font-medium text-black hover:bg-zinc-200"
+        >
+          Login to post
+        </button>
+      )}
+    </form>
   );
 }
