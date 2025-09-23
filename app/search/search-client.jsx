@@ -1,131 +1,90 @@
-<<<<<<< HEAD
+// app/search/search-client.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import Feed from "@/components/Feed";
 
-const CATS = [
-  "All","Confessions","Posts","Product Reviews","Movie Reviews","Place Reviews",
-  "Post Ideas","Post Ads","Business Info","Sports","Science","Automobile",
-  "Education","Anime","Games",
-];
+export default function SearchClient({
+  initialQuery = "",
+  initialCategory = "",
+  categories = [],
+}) {
+  const router = useRouter();
+  const params = useSearchParams();
 
-export default function SearchClient() {
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState("All");
-  const [sort, setSort] = useState("recent");
-
-  // Debounce to avoid hammering Firestore while typing
-  const [debounced, setDebounced] = useState({ q: "", cat: "All", sort: "recent" });
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced({ q, cat, sort }), 350);
-    return () => clearTimeout(t);
-  }, [q, cat, sort]);
-
-  const effectiveCat = useMemo(
-    () => (debounced.cat === "All" ? undefined : debounced.cat),
-    [debounced.cat]
+  const cats = useMemo(
+    () => (Array.isArray(categories) ? categories : []),
+    [categories]
   );
 
+  const [q, setQ] = useState(initialQuery);
+  const [cat, setCat] = useState(
+    cats.includes(initialCategory) ? initialCategory : ""
+  );
+
+  // keep state in sync with URL changes (e.g. back/forward)
+  useEffect(() => {
+    const urlQ = params.get("q") ?? "";
+    const urlCat = params.get("cat") ?? "";
+    setQ(urlQ);
+    setCat(cats.includes(urlCat) ? urlCat : "");
+  }, [params, cats]);
+
+  const apply = () => {
+    const sp = new URLSearchParams();
+    if (q) sp.set("q", q);
+    if (cat) sp.set("cat", cat);
+    router.push(`/search${sp.toString() ? `?${sp}` : ""}`);
+  };
+
+  const onSubmit = (e) => {
+    e.preventDefault();
+    apply();
+  };
+
   return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+    <div className="grid gap-4">
+      <h1 className="text-3xl font-bold">Search</h1>
+
+      <form onSubmit={onSubmit} className="flex flex-wrap gap-2">
         <input
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search title…"
-          className="w-full rounded-lg border border-white/15 bg-black px-3 py-2 outline-none focus:border-white/30"
+          placeholder="Search titles & text…"
+          className="min-w-[260px] grow rounded-md border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-200"
         />
         <select
           value={cat}
           onChange={(e) => setCat(e.target.value)}
-          className="w-full rounded-lg border border-white/15 bg-black px-3 py-2"
+          className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-200"
         >
-          {CATS.map((c) => <option key={c}>{c}</option>)}
+          <option value="">All categories</option>
+          {cats.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
         </select>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-          className="w-full rounded-lg border border-white/15 bg-black px-3 py-2"
+        <button
+          type="submit"
+          className="rounded-md border border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-900"
         >
-          <option value="recent">Newest</option>
-          <option value="liked">Most liked</option>
-          <option value="commented">Most commented</option>
-          <option value="viewed">Most viewed</option>
-        </select>
+          Search
+        </button>
+      </form>
+
+      <div className="text-sm text-zinc-400">
+        Query: <span className="text-zinc-200">{q || "—"}</span>
+        {cat ? (
+          <>
+            {" "}| Category: <span className="text-zinc-200">{cat}</span>
+          </>
+        ) : null}
       </div>
 
-      <Feed
-        category={effectiveCat}
-        q={debounced.q.trim() || undefined}
-        sort={debounced.sort}
-      />
+      {/* TODO: replace with real results; empty feed shows a friendly state */}
+      <Feed posts={[]} />
     </div>
   );
 }
-=======
-"use client";
-
-import { useEffect, useMemo, useState } from "react";
-import Feed from "@/components/Feed";
-
-const CATS = [
-  "All","Confessions","Posts","Product Reviews","Movie Reviews","Place Reviews",
-  "Post Ideas","Post Ads","Business Info","Sports","Science","Automobile",
-  "Education","Anime","Games",
-];
-
-export default function SearchClient() {
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState("All");
-  const [sort, setSort] = useState("recent");
-
-  // Debounce to avoid hammering Firestore while typing
-  const [debounced, setDebounced] = useState({ q: "", cat: "All", sort: "recent" });
-  useEffect(() => {
-    const t = setTimeout(() => setDebounced({ q, cat, sort }), 350);
-    return () => clearTimeout(t);
-  }, [q, cat, sort]);
-
-  const effectiveCat = useMemo(
-    () => (debounced.cat === "All" ? undefined : debounced.cat),
-    [debounced.cat]
-  );
-
-  return (
-    <div className="space-y-5">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <input
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          placeholder="Search title…"
-          className="w-full rounded-lg border border-white/15 bg-black px-3 py-2 outline-none focus:border-white/30"
-        />
-        <select
-          value={cat}
-          onChange={(e) => setCat(e.target.value)}
-          className="w-full rounded-lg border border-white/15 bg-black px-3 py-2"
-        >
-          {CATS.map((c) => <option key={c}>{c}</option>)}
-        </select>
-        <select
-          value={sort}
-          onChange={(e) => setSort(e.target.value)}
-          className="w-full rounded-lg border border-white/15 bg-black px-3 py-2"
-        >
-          <option value="recent">Newest</option>
-          <option value="liked">Most liked</option>
-          <option value="commented">Most commented</option>
-          <option value="viewed">Most viewed</option>
-        </select>
-      </div>
-
-      <Feed
-        category={effectiveCat}
-        q={debounced.q.trim() || undefined}
-        sort={debounced.sort}
-      />
-    </div>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)

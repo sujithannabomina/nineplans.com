@@ -1,47 +1,14 @@
-<<<<<<< HEAD
 // app/top/liked/page.js
-"use client";
+import Feed from "@/components/Feed";
 
-import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
-import PostCard from "@/components/PostCard";
-import { getTopPosts } from "@/lib/db";
+export const metadata = { title: "Most Liked • NinePlans" };
 
 export default function TopLikedPage() {
-  const [items, setItems] = useState([]);
-  useEffect(() => { (async () => setItems(await getTopPosts("liked", 50)))(); }, []);
   return (
-    <>
-      <Navbar />
-      <main className="mx-auto max-w-3xl px-4 py-6">
-        <h1 className="text-2xl font-semibold mb-4">Top — Most Liked</h1>
-        {!items.length ? <div className="opacity-70">No posts yet.</div> :
-          items.map(p => <PostCard key={p.id} post={p} />)}
-      </main>
-    </>
+    <div className="grid gap-4">
+      <h1 className="text-3xl font-bold">Most Liked</h1>
+      {/* TODO: supply posts sorted by likes desc */}
+      <Feed posts={[]} />
+    </div>
   );
 }
-=======
-// app/top/liked/page.js
-"use client";
-
-import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
-import PostCard from "@/components/PostCard";
-import { getTopPosts } from "@/lib/db";
-
-export default function TopLikedPage() {
-  const [items, setItems] = useState([]);
-  useEffect(() => { (async () => setItems(await getTopPosts("liked", 50)))(); }, []);
-  return (
-    <>
-      <Navbar />
-      <main className="mx-auto max-w-3xl px-4 py-6">
-        <h1 className="text-2xl font-semibold mb-4">Top — Most Liked</h1>
-        {!items.length ? <div className="opacity-70">No posts yet.</div> :
-          items.map(p => <PostCard key={p.id} post={p} />)}
-      </main>
-    </>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)

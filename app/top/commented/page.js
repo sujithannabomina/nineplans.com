@@ -1,47 +1,14 @@
-<<<<<<< HEAD
 // app/top/commented/page.js
-"use client";
+import Feed from "@/components/Feed";
 
-import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
-import PostCard from "@/components/PostCard";
-import { getTopPosts } from "@/lib/db";
+export const metadata = { title: "Most Commented • NinePlans" };
 
 export default function TopCommentedPage() {
-  const [items, setItems] = useState([]);
-  useEffect(() => { (async () => setItems(await getTopPosts("commented", 50)))(); }, []);
   return (
-    <>
-      <Navbar />
-      <main className="mx-auto max-w-3xl px-4 py-6">
-        <h1 className="text-2xl font-semibold mb-4">Top — Most Commented</h1>
-        {!items.length ? <div className="opacity-70">No posts yet.</div> :
-          items.map(p => <PostCard key={p.id} post={p} />)}
-      </main>
-    </>
+    <div className="grid gap-4">
+      <h1 className="text-3xl font-bold">Most Commented</h1>
+      {/* TODO: supply posts sorted by comments desc */}
+      <Feed posts={[]} />
+    </div>
   );
 }
-=======
-// app/top/commented/page.js
-"use client";
-
-import { useEffect, useState } from "react";
-import Navbar from "@/components/Navbar";
-import PostCard from "@/components/PostCard";
-import { getTopPosts } from "@/lib/db";
-
-export default function TopCommentedPage() {
-  const [items, setItems] = useState([]);
-  useEffect(() => { (async () => setItems(await getTopPosts("commented", 50)))(); }, []);
-  return (
-    <>
-      <Navbar />
-      <main className="mx-auto max-w-3xl px-4 py-6">
-        <h1 className="text-2xl font-semibold mb-4">Top — Most Commented</h1>
-        {!items.length ? <div className="opacity-70">No posts yet.</div> :
-          items.map(p => <PostCard key={p.id} post={p} />)}
-      </main>
-    </>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
