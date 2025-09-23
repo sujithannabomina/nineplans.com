@@ -1,21 +1,10 @@
-<<<<<<< HEAD
+// components/RightRailAd.jsx
 export default function RightRailAd() {
   return (
-    <div className="sticky top-20">
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-        <div className="text-white/60">Ads will appear here and across the page (Auto Ads).</div>
+    <aside className="sticky top-20 hidden w-72 shrink-0 p-3 md:block">
+      <div className="rounded-lg border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-400">
+        Ads will appear here and across the page (Auto Ads).
       </div>
-    </div>
+    </aside>
   );
 }
-=======
-export default function RightRailAd() {
-  return (
-    <div className="sticky top-20">
-      <div className="rounded-xl border border-white/10 bg-white/5 p-4">
-        <div className="text-white/60">Ads will appear here and across the page (Auto Ads).</div>
-      </div>
-    </div>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
