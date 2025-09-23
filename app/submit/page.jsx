@@ -1,13 +1,13 @@
-import { Suspense } from 'react';
-import SubmitClient from '../../components/SubmitClient';
+// app/submit/page.jsx
+import SubmitClient from "@/components/SubmitClient";
 
-export const metadata = { title: 'Submit • NinePlans' };
+export const metadata = { title: "Submit • NinePlans" };
 
 export default function SubmitPage() {
-  // Wrap client hook usage in Suspense (fixes Next warning)
   return (
-    <Suspense fallback={<div className="text-zinc-400">Loading form…</div>}>
+    <div className="space-y-6">
+      <h1 className="text-4xl font-extrabold tracking-tight">Submit</h1>
       <SubmitClient />
-    </Suspense>
+    </div>
   );
 }
