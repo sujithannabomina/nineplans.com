@@ -1,97 +1,79 @@
-<<<<<<< HEAD
-'use client';
+"use client";
 
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-
-const CATS = [
-  'Confessions','Posts','Product Reviews','Movie Reviews','Place Reviews',
-  'Post Ideas','Post Ads','Business Info','Sports','Science','Automobile',
-  'Education','Anime','Games'
-];
+import { useEffect, useMemo, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSession, signIn } from "next-auth/react";
+import { CATEGORIES } from "@/lib/site";
 
 export default function SubmitClient() {
+  const { status } = useSession();
+  const router = useRouter();
   const params = useSearchParams();
-  const catParam = params.get('cat') || '';
-  const initial = useMemo(() => {
-    const idx = CATS.findIndex(c => c.toLowerCase() === catParam?.toLowerCase());
-    return idx >= 0 ? CATS[idx] : 'Confessions';
-  }, [catParam]);
 
-  const [category, setCategory] = useState(initial);
+  const categories = useMemo(
+    () => (CATEGORIES ?? []).map((c) => (typeof c === "string" ? c : c.name)),
+    []
+  );
+
+  const [cat, setCat] = useState(
+    params.get("cat") && categories.includes(params.get("cat"))
+      ? params.get("cat")
+      : categories[0] ?? "Confessions"
+  );
 
   useEffect(() => {
-    setCategory(initial);
-  }, [initial]);
+    if (status === "unauthenticated") {
+      // Send them to login and back to /submit afterwards
+      router.push(`/login?next=${encodeURIComponent("/submit")}`);
+    }
+  }, [status, router]);
 
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="text-sm text-zinc-400">Category</div>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2"
-        >
-          {CATS.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+  if (status === "loading") {
+    return (
+      <div className="rounded-md border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-400">
+        Checking session…
       </div>
+    );
+  }
 
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-        {/* your existing form fields… */}
-        <div className="text-zinc-400 text-sm">
-          Write your post. Links allowed. No images/videos in comments.
-        </div>
+  if (status === "unauthenticated") {
+    return (
+      <div className="rounded-md border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-300">
+        You must be logged in to post.{" "}
+        <button
+          onClick={() => signIn("google", { callbackUrl: "/submit" })}
+          className="ml-2 rounded border border-zinc-700 px-2 py-1 text-sm hover:bg-zinc-900"
+        >
+          Login with Google
+        </button>
+      </div>
+    );
+  }
+
+  // …render your existing form here, using "cat" as the selected category.
+  return (
+    <div className="grid gap-4">
+      <h1 className="text-3xl font-bold">Submit</h1>
+
+      <label className="block text-sm text-zinc-300">
+        Category
+        <select
+          className="mt-1 block w-full rounded-md border border-zinc-700 bg-black p-2 text-sm"
+          value={cat}
+          onChange={(e) => setCat(e.target.value)}
+        >
+          {categories.map((c) => (
+            <option key={c} value={c}>
+              {c}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      {/* TODO: your Title / Body fields and Post button */}
+      <div className="rounded-md border border-zinc-800 bg-zinc-950/40 p-4 text-sm text-zinc-400">
+        Form fields go here (title, body, etc.). Hook into Firestore as you had.
       </div>
     </div>
   );
 }
-=======
-'use client';
-
-import { useSearchParams } from 'next/navigation';
-import { useEffect, useMemo, useState } from 'react';
-
-const CATS = [
-  'Confessions','Posts','Product Reviews','Movie Reviews','Place Reviews',
-  'Post Ideas','Post Ads','Business Info','Sports','Science','Automobile',
-  'Education','Anime','Games'
-];
-
-export default function SubmitClient() {
-  const params = useSearchParams();
-  const catParam = params.get('cat') || '';
-  const initial = useMemo(() => {
-    const idx = CATS.findIndex(c => c.toLowerCase() === catParam?.toLowerCase());
-    return idx >= 0 ? CATS[idx] : 'Confessions';
-  }, [catParam]);
-
-  const [category, setCategory] = useState(initial);
-
-  useEffect(() => {
-    setCategory(initial);
-  }, [initial]);
-
-  return (
-    <div className="space-y-4">
-      <div className="flex items-center gap-3">
-        <div className="text-sm text-zinc-400">Category</div>
-        <select
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
-          className="bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2"
-        >
-          {CATS.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
-      </div>
-
-      <div className="rounded-2xl border border-zinc-800 bg-zinc-950/60 p-4">
-        {/* your existing form fields… */}
-        <div className="text-zinc-400 text-sm">
-          Write your post. Links allowed. No images/videos in comments.
-        </div>
-      </div>
-    </div>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
