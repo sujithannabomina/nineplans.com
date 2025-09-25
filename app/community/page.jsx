@@ -1,27 +1,14 @@
-<<<<<<< HEAD
-export const metadata = { title: 'Community • NinePlans' };
+// app/community/page.jsx
+export const metadata = { title: "Community • NinePlans" };
 
 export default function CommunityPage() {
   return (
-    <div className="space-y-3">
-      <h1 className="text-2xl sm:text-3xl font-bold">Community</h1>
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold">Community</h1>
       <p className="text-zinc-300">
-        Welcome to NinePlans community. Be kind, share ideas, and help each other.
+        Welcome! Community tools (groups, reputation, and events) are on the
+        roadmap. For now, jump in by writing posts, commenting, and upvoting.
       </p>
     </div>
   );
 }
-=======
-export const metadata = { title: 'Community • NinePlans' };
-
-export default function CommunityPage() {
-  return (
-    <div className="space-y-3">
-      <h1 className="text-2xl sm:text-3xl font-bold">Community</h1>
-      <p className="text-zinc-300">
-        Welcome to NinePlans community. Be kind, share ideas, and help each other.
-      </p>
-    </div>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
