@@ -1,159 +1,93 @@
-<<<<<<< HEAD
 "use client";
 
 import { useEffect, useState } from "react";
-import { signOut } from "next-auth/react";
 import Link from "next/link";
-
-const ALIAS_KEY = "np_alias";
+import { useSession, signOut } from "next-auth/react";
 
 export default function ProfileSettingsClient() {
+  const { data: session, status } = useSession();
   const [alias, setAlias] = useState("");
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(ALIAS_KEY) || "";
-      setAlias(saved);
-    } catch {}
+    // Load alias from localStorage (simple, works without a backend table)
+    const a = typeof window !== "undefined" ? localStorage.getItem("np_alias") : "";
+    setAlias(a || "");
   }, []);
 
-  const saveAlias = () => {
-    try {
-      localStorage.setItem(ALIAS_KEY, alias.trim());
-      // optional toast could go here
-    } catch {}
+  const onSave = () => {
+    const value = alias.trim();
+    if (typeof window !== "undefined") {
+      localStorage.setItem("np_alias", value);
+    }
+    setSaved(true);
+    setTimeout(() => setSaved(false), 2000);
   };
 
-  const deleteAndSignOut = async () => {
-    try {
-      localStorage.removeItem(ALIAS_KEY);
-    } catch {}
-    await signOut({ callbackUrl: "/" });
-  };
+  if (status === "loading") {
+    return <div className="text-zinc-300">Loading…</div>;
+  }
+
+  if (!session) {
+    return (
+      <div className="rounded-lg border border-white/10 bg-black/30 p-6">
+        <h1 className="mb-2 text-2xl font-semibold">Settings</h1>
+        <p className="text-zinc-300">
+          You’re not logged in. <Link href="/login" className="text-sky-400 underline">Log in</Link> to manage your profile.
+        </p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Profile settings</h1>
+      <section className="rounded-lg border border-white/10 bg-black/30 p-6">
+        <h2 className="text-xl font-semibold">Profile</h2>
+        <div className="mt-4 grid gap-4 sm:max-w-md">
+          <label className="block">
+            <span className="mb-1 block text-sm text-zinc-300">Display name (alias)</span>
+            <input
+              value={alias}
+              onChange={(e) => setAlias(e.target.value)}
+              placeholder="Your alias"
+              className="w-full rounded-md border border-white/10 bg-zinc-900 px-3 py-2 outline-none ring-0 focus:border-sky-500"
+            />
+          </label>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onSave}
+              className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium hover:bg-sky-500"
+            >
+              Save
+            </button>
+            {saved && <span className="text-sm text-green-400">Saved.</span>}
+          </div>
+          <p className="text-xs text-zinc-400">
+            Your alias is shown with your posts and comments. You can still post anonymously.
+          </p>
+        </div>
+      </section>
 
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-        <label className="block text-sm font-medium mb-2">Alias</label>
-        <input
-          value={alias}
-          onChange={(e) => setAlias(e.target.value)}
-          placeholder="Set an alias used when posting as Alias"
-          className="w-full rounded-lg border border-neutral-700 bg-black/40 px-3 py-2 outline-none focus:border-neutral-500"
-        />
-        <div className="mt-3 flex gap-3">
+      <section className="rounded-lg border border-white/10 bg-black/30 p-6">
+        <h2 className="text-xl font-semibold">Account</h2>
+        <div className="mt-4 flex flex-wrap items-center gap-3">
           <button
-            onClick={saveAlias}
-            className="rounded-lg bg-white/90 text-black px-4 py-2 font-medium hover:bg-white"
+            onClick={() => signOut({ callbackUrl: "/" })}
+            className="rounded-md border border-white/10 px-4 py-2 text-sm hover:bg-white/5"
           >
-            Save
+            Sign out
           </button>
           <Link
-            href="/profile"
-            className="rounded-lg border border-neutral-700 px-4 py-2 font-medium"
+            href="/profile/delete"
+            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium hover:bg-red-500"
           >
-            Back to profile
+            Delete account
           </Link>
         </div>
-      </div>
-
-      <div className="rounded-xl border border-red-900 bg-red-950/40 p-4">
-        <h2 className="text-lg font-semibold text-red-200">
-          Delete my account (site data)
-        </h2>
-        <p className="mt-1 text-sm text-red-200/80">
-          We only store your alias locally. Click to remove local data and sign
-          out.
+        <p className="mt-2 text-xs text-zinc-400">
+          Deleting your account removes your login access. Public posts may remain where allowed by policy.
         </p>
-        <button
-          onClick={deleteAndSignOut}
-          className="mt-3 rounded-lg border border-red-400 px-4 py-2 font-semibold text-red-100 hover:bg-red-900/30"
-        >
-          Delete &amp; Sign out
-        </button>
-      </div>
+      </section>
     </div>
   );
 }
-=======
-"use client";
-
-import { useEffect, useState } from "react";
-import { signOut } from "next-auth/react";
-import Link from "next/link";
-
-const ALIAS_KEY = "np_alias";
-
-export default function ProfileSettingsClient() {
-  const [alias, setAlias] = useState("");
-
-  useEffect(() => {
-    try {
-      const saved = localStorage.getItem(ALIAS_KEY) || "";
-      setAlias(saved);
-    } catch {}
-  }, []);
-
-  const saveAlias = () => {
-    try {
-      localStorage.setItem(ALIAS_KEY, alias.trim());
-      // optional toast could go here
-    } catch {}
-  };
-
-  const deleteAndSignOut = async () => {
-    try {
-      localStorage.removeItem(ALIAS_KEY);
-    } catch {}
-    await signOut({ callbackUrl: "/" });
-  };
-
-  return (
-    <div className="space-y-8">
-      <h1 className="text-3xl font-bold">Profile settings</h1>
-
-      <div className="rounded-xl border border-neutral-800 bg-neutral-900/40 p-4">
-        <label className="block text-sm font-medium mb-2">Alias</label>
-        <input
-          value={alias}
-          onChange={(e) => setAlias(e.target.value)}
-          placeholder="Set an alias used when posting as Alias"
-          className="w-full rounded-lg border border-neutral-700 bg-black/40 px-3 py-2 outline-none focus:border-neutral-500"
-        />
-        <div className="mt-3 flex gap-3">
-          <button
-            onClick={saveAlias}
-            className="rounded-lg bg-white/90 text-black px-4 py-2 font-medium hover:bg-white"
-          >
-            Save
-          </button>
-          <Link
-            href="/profile"
-            className="rounded-lg border border-neutral-700 px-4 py-2 font-medium"
-          >
-            Back to profile
-          </Link>
-        </div>
-      </div>
-
-      <div className="rounded-xl border border-red-900 bg-red-950/40 p-4">
-        <h2 className="text-lg font-semibold text-red-200">
-          Delete my account (site data)
-        </h2>
-        <p className="mt-1 text-sm text-red-200/80">
-          We only store your alias locally. Click to remove local data and sign
-          out.
-        </p>
-        <button
-          onClick={deleteAndSignOut}
-          className="mt-3 rounded-lg border border-red-400 px-4 py-2 font-semibold text-red-100 hover:bg-red-900/30"
-        >
-          Delete &amp; Sign out
-        </button>
-      </div>
-    </div>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
