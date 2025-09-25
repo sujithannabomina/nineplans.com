@@ -1,39 +1,22 @@
-<<<<<<< HEAD
-export const metadata = { title: 'Terms • NinePlans' };
+export const metadata = { title: "Terms • NinePlans" };
 
 export default function TermsPage() {
   return (
     <article className="prose prose-invert max-w-none">
-      <h1 className="text-2xl sm:text-3xl font-bold">Terms of Service</h1>
+      <h1>Terms</h1>
       <p>
-        Use of NinePlans is at your own risk. Content is user-generated. We may
-        remove content and restrict access at our discretion.
+        By using NinePlans you agree to follow our Rules and applicable laws. You’re responsible for
+        the content you post and you grant us a license to host and display it on our services.
       </p>
       <p>
-        By posting, you grant us a non-exclusive license to host and display your
-        content. These terms may change occasionally; continued use means you accept
-        the changes.
-      </p>
-    </article>
-  );
-}
-=======
-export const metadata = { title: 'Terms • NinePlans' };
-
-export default function TermsPage() {
-  return (
-    <article className="prose prose-invert max-w-none">
-      <h1 className="text-2xl sm:text-3xl font-bold">Terms of Service</h1>
-      <p>
-        Use of NinePlans is at your own risk. Content is user-generated. We may
-        remove content and restrict access at our discretion.
+        We may remove content or restrict accounts that violate our policies. The service is
+        provided “as is” without warranties. To the extent permitted by law, our liability is
+        limited.
       </p>
       <p>
-        By posting, you grant us a non-exclusive license to host and display your
-        content. These terms may change occasionally; continued use means you accept
-        the changes.
+        These terms may change; continued use after changes constitutes acceptance. If you have
+        questions, contact support@nineplans.com.
       </p>
     </article>
   );
 }
->>>>>>> 724b0ef (Initial commit from local working folder)

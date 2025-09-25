@@ -1,61 +1,36 @@
-<<<<<<< HEAD
-export const metadata = { title: 'Community Rules • NinePlans' };
+export const metadata = { title: "Community Rules • NinePlans" };
 
 const Card = ({ title, children }) => (
-  <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-    <div className="font-semibold mb-2">{title}</div>
-    <div className="text-zinc-300 text-sm">{children}</div>
+  <div className="rounded-lg border border-white/10 bg-black/30 p-4">
+    <h2 className="text-lg font-semibold">{title}</h2>
+    <div className="mt-2 text-zinc-300">{children}</div>
   </div>
 );
 
 export default function RulesPage() {
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl sm:text-3xl font-bold">Community Rules</h1>
+      <h1 className="text-3xl font-bold">Community Rules</h1>
 
-      <Card title="Keep it human. No hate or harassment.">
-        Debate ideas, not people. Targeted insults, slurs, and encouragement of self-harm are not allowed.
+      <Card title="Be respectful">
+        No harassment, hate speech, or personal attacks. Debate ideas, not people.
       </Card>
-      <Card title="No sexual content involving minors or non-consensual acts.">
-        Zero tolerance. This includes suggestive content of minors and sexual violence.
+
+      <Card title="No illegal or dangerous content">
+        Don’t post or request illegal content or instructions to cause harm.
       </Card>
-      <Card title="Protect privacy. No doxxing.">
-        Don’t share private info like addresses, phone numbers, IDs, medical or financial records without consent.
+
+      <Card title="Protect privacy">
+        No doxxing or sharing personal information without consent.
       </Card>
-      <Card title="No illegal or dangerous activity.">
-        Don’t promote violence, terrorism, hacking, buying/selling illegal goods, or instructions to commit crimes.
+
+      <Card title="No spam or scams">
+        Self-promotion must add value and follow disclosure laws. No link spam.
+      </Card>
+
+      <Card title="Vote & report responsibly">
+        Upvote quality, downvote off-topic, and use report for rule violations.
       </Card>
     </div>
   );
 }
-=======
-export const metadata = { title: 'Community Rules • NinePlans' };
-
-const Card = ({ title, children }) => (
-  <div className="rounded-lg border border-zinc-800 bg-zinc-950 p-4">
-    <div className="font-semibold mb-2">{title}</div>
-    <div className="text-zinc-300 text-sm">{children}</div>
-  </div>
-);
-
-export default function RulesPage() {
-  return (
-    <div className="space-y-6">
-      <h1 className="text-2xl sm:text-3xl font-bold">Community Rules</h1>
-
-      <Card title="Keep it human. No hate or harassment.">
-        Debate ideas, not people. Targeted insults, slurs, and encouragement of self-harm are not allowed.
-      </Card>
-      <Card title="No sexual content involving minors or non-consensual acts.">
-        Zero tolerance. This includes suggestive content of minors and sexual violence.
-      </Card>
-      <Card title="Protect privacy. No doxxing.">
-        Don’t share private info like addresses, phone numbers, IDs, medical or financial records without consent.
-      </Card>
-      <Card title="No illegal or dangerous activity.">
-        Don’t promote violence, terrorism, hacking, buying/selling illegal goods, or instructions to commit crimes.
-      </Card>
-    </div>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
