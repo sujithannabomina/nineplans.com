@@ -1,66 +1,42 @@
-// app/c/[slug]/page.js
-import Feed from "@/components/Feed";
+// /app/c/[slug]/page.js
 import Link from "next/link";
+import { Suspense } from "react";
+import Feed from "@/components/Feed";
 
-// Keep a local list so the page works even if lib/site.js isn't imported here.
-const CATS = [
-  "Confessions",
-  "Posts",
-  "Product Reviews",
-  "Movie Reviews",
-  "Place Reviews",
-  "Post Ideas",
-  "Post Ads",
-  "Business Info",
-  "Sports",
-  "Science",
-  "Automobile",
-  "Education",
-  "Anime",
-];
-
-const toSlug = (s) =>
-  (s || "")
-    .toLowerCase()
-    .replace(/&/g, "and")
-    .replace(/['"’`]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
-
-function nameFromSlug(slug) {
-  const hit = CATS.find((c) => toSlug(c) === slug);
-  if (hit) return hit;
-  // Fallback to decent title-casing
-  return (slug || "")
-    .split("-")
-    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : ""))
-    .join(" ");
-}
+export const dynamic = "force-dynamic"; // always render, don’t 404 on unknown slugs
 
 export async function generateMetadata({ params }) {
-  const categoryName = nameFromSlug(params.slug);
-  return {
-    title: `${categoryName} • NinePlans`,
-  };
+  const title = `${decodeURIComponent(params.slug)
+    .replace(/-/g, " ")
+    .replace(/\b\w/g, (m) => m.toUpperCase())} • NinePlans`;
+  return { title };
 }
 
 export default function CategoryPage({ params }) {
-  const categoryName = nameFromSlug(params.slug);
+  const slug = decodeURIComponent(params.slug);
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold">{categoryName}</h1>
-        <Link
-          href={`/submit?cat=${encodeURIComponent(categoryName)}`}
-          className="rounded-md border border-white/15 px-3 py-1.5 text-sm hover:bg-white/10"
-        >
-          Write a post
-        </Link>
-      </div>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <h1 className="text-xl font-semibold">
+            {slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase())}
+          </h1>
+          <p className="text-sm text-zinc-400">Recent posts in “{slug}”.</p>
+        </div>
 
-      {/* Feed will filter by category on the client */}
-      <Feed category={categoryName} />
+        {/* “Write in this category” CTA -> /submit?category=<slug> */}
+        <Link
+          href={`/submit?category=${encodeURIComponent(slug)}`}
+          className="button whitespace-nowrap"
+        >
+          Write in this category
+        </Link>
+      </header>
+
+      <Suspense fallback={<div className="text-zinc-400 px-2 py-4">Loading posts…</div>}>
+        <Feed category={slug} />
+      </Suspense>
     </div>
   );
 }

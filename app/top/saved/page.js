@@ -1,14 +1,18 @@
-// app/top/saved/page.js
+import { Suspense } from "react";
 import Feed from "@/components/Feed";
 
 export const metadata = { title: "Saved • NinePlans" };
 
-export default function SavedPage() {
+export default function TopSavedPage() {
   return (
-    <div className="grid gap-4">
-      <h1 className="text-3xl font-bold">Saved</h1>
-      {/* TODO: show current user's saved posts; require login */}
-      <Feed posts={[]} />
+    <div className="space-y-4">
+      <h1 className="text-xl font-semibold">Saved</h1>
+      <p className="text-sm text-zinc-400">
+        Your saved posts (sign in required).
+      </p>
+      <Suspense fallback={<div className="text-zinc-400 px-2 py-4">Loading…</div>}>
+        <Feed sort="saved" />
+      </Suspense>
     </div>
   );
 }

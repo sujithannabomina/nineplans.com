@@ -1,32 +1,44 @@
-// app/layout.jsx
 import "./globals.css";
+import { Suspense } from "react";
+import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
-import GlobalBanner from "@/components/GlobalBanner";
 import LeftNav from "@/components/LeftNav";
 import RightRailAd from "@/components/RightRailAd";
-import Providers from "@/components/Providers";
 
 export const metadata = {
-  title: "NinePlans — Next Big Thing",
-  description: "Share confessions, ideas and reviews.",
+  title: "NinePlans",
+  description: "Write and read anonymously on NinePlans.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="bg-black">
-      <body className="text-zinc-100">
+    <html lang="en">
+      <body>
         <Providers>
-          <Navbar />
-          <GlobalBanner />
+          {/* SINGLE header/Banner (no duplicate bottom banner anywhere) */}
+          <header className="w-full header-banner">
+            <Suspense fallback={null}>
+              <Navbar />
+            </Suspense>
+          </header>
 
-          <main className="mx-auto max-w-7xl px-3 lg:px-4">
-            <div className="flex gap-6">
-              <LeftNav />
-              <div className="flex-1 min-w-0 py-6">{children}</div>
-              <aside className="hidden xl:block w-72 shrink-0 py-6">
-                <RightRailAd />
-              </aside>
-            </div>
+          {/* 3-column layout on desktop; LeftNav scrollable; mobile = content only */}
+          <main className="container mx-auto grid grid-cols-12 gap-4 pt-4">
+            <aside className="hidden lg:block col-span-3">
+              <div className="leftnav-scroll">
+                <Suspense fallback={null}>
+                  <LeftNav />
+                </Suspense>
+              </div>
+            </aside>
+
+            <section className="col-span-12 lg:col-span-6 min-h-[60vh]">
+              {children}
+            </section>
+
+            <aside className="hidden lg:block col-span-3">
+              <RightRailAd />
+            </aside>
           </main>
         </Providers>
       </body>
