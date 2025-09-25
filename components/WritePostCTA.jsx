@@ -1,41 +1,45 @@
-<<<<<<< HEAD
 "use client";
+
 import Link from "next/link";
+import { useSession } from "next-auth/react";
 import { useSearchParams } from "next/navigation";
 
 export default function WritePostCTA() {
-  const sp = useSearchParams();
-  const cat = sp.get("cat") || "Confessions";
-  return (
-    <div className="flex items-center justify-between mb-4">
-      <h2 className="text-xl font-semibold">Recent Posts {cat ? `— ${cat}` : ""}</h2>
-      <Link
-        href={`/submit?cat=${encodeURIComponent(cat)}`}
-        className="rounded-xl border border-zinc-700 px-4 py-2 hover:bg-zinc-900"
-      >
-        Write in {cat}
-      </Link>
-    </div>
-  );
-}
-=======
-"use client";
-import Link from "next/link";
-import { useSearchParams } from "next/navigation";
+  const { data: session } = useSession();
+  const params = useSearchParams();
 
-export default function WritePostCTA() {
-  const sp = useSearchParams();
-  const cat = sp.get("cat") || "Confessions";
+  const cat =
+    params.get("cat") ||
+    params.get("category") ||
+    params.get("c") ||
+    "";
+
+  const targetWhenLoggedIn = cat
+    ? `/submit?cat=${encodeURIComponent(cat)}`
+    : "/submit";
+
+  const targetWhenAnon = cat
+    ? `/login?redirect=${encodeURIComponent(`/submit?cat=${cat}`)}`
+    : `/login?redirect=${encodeURIComponent("/submit")}`;
+
+  const href = session ? targetWhenLoggedIn : targetWhenAnon;
+
   return (
-    <div className="flex items-center justify-between mb-4">
-      <h2 className="text-xl font-semibold">Recent Posts {cat ? `— ${cat}` : ""}</h2>
-      <Link
-        href={`/submit?cat=${encodeURIComponent(cat)}`}
-        className="rounded-xl border border-zinc-700 px-4 py-2 hover:bg-zinc-900"
-      >
-        Write in {cat}
-      </Link>
+    <div className="my-4 rounded-lg border border-white/10 bg-black/30 p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm text-zinc-300">
+          Want to share something?{" "}
+          <span className="text-zinc-400">
+            {session ? "Start a new post." : "Log in to start a post."}
+          </span>
+        </div>
+        <Link
+          href={href}
+          className="rounded-md bg-sky-600 px-4 py-2 text-sm font-medium hover:bg-sky-500"
+        >
+          Write a post
+        </Link>
+      </div>
     </div>
   );
 }
->>>>>>> 724b0ef (Initial commit from local working folder)
