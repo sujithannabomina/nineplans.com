@@ -1,57 +1,83 @@
-<<<<<<< HEAD
 /* app/globals.css */
 
-/* Load Tailwind layers */
+/* Tailwind layers (keep if you’re using Tailwind) */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* Dark theme baseline */
-:root { color-scheme: dark; }
-html, body { background:#000; color:#fff; }
-
-/* Small niceties */
-* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-a { color:#fff; text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-/* Optional: nicer scrollbars */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 8px; }
-
-/* globals.css additions (append safely) */
-.prose :where(code):not(:where([class~="not-prose"] *)) {
-  background: #0b0b0b;
-  border: 1px solid #27272a;
-  padding: 0.1rem 0.3rem;
-  border-radius: 0.25rem;
+/* Base dark theme body styles */
+:root {
+  color-scheme: dark;
 }
-=======
-/* app/globals.css */
 
-/* Load Tailwind layers */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
-/* Dark theme baseline */
-:root { color-scheme: dark; }
-html, body { background:#000; color:#fff; }
-
-/* Small niceties */
-* { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
-a { color:#fff; text-decoration: none; }
-a:hover { text-decoration: underline; }
-
-/* Optional: nicer scrollbars */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,.18); border-radius: 8px; }
-
-/* globals.css additions (append safely) */
-.prose :where(code):not(:where([class~="not-prose"] *)) {
-  background: #0b0b0b;
-  border: 1px solid #27272a;
-  padding: 0.1rem 0.3rem;
-  border-radius: 0.25rem;
+html, body {
+  height: 100%;
 }
->>>>>>> 724b0ef (Initial commit from local working folder)
+
+body {
+  margin: 0;
+  background: #0a0a0a;      /* near-black */
+  color: #e5e7eb;           /* zinc-200 */
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto,
+    Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+}
+
+/* Links */
+a { color: #7dd3fc; }        /* sky-300 */
+a:hover { color: #38bdf8; }  /* sky-400 */
+
+/* Simple containers */
+.container {
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+/* Card utility if you need it */
+.card {
+  background: rgba(0,0,0,0.3);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 0.5rem;
+  padding: 1rem;
+}
+
+/* Ensure left nav can scroll independently if it’s sticky */
+.leftnav-scroll {
+  max-height: calc(100vh - 80px);
+  overflow-y: auto;
+}
+
+/* Hide duplicate banner spacing if needed */
+.header-banner {
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.6);
+}
+
+/* Prevent images from breaking layout */
+img { max-width: 100%; height: auto; display: block; }
+
+/* Forms */
+input, select, textarea {
+  background: #18181b; /* zinc-900 */
+  color: #e5e7eb;
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  outline: none;
+}
+input:focus, select:focus, textarea:focus {
+  border-color: #38bdf8;    /* sky-400 */
+}
+
+/* Buttons */
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #0284c7;      /* sky-700 */
+  color: white;
+  border-radius: 0.375rem;
+  padding: 0.5rem 0.875rem;
+}
+.button:hover { background: #0ea5e9; } /* sky-600 */

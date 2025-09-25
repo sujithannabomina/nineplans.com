@@ -1,16 +1,15 @@
-// app/submit/page.jsx
+// Server Component gate that requires login before showing the client form
+import { getServerSession } from "next-auth/next";
 import { redirect } from "next/navigation";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"; // adjust if your auth file exports differently
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import SubmitClient from "./submit-client";
-import { CATEGORIES } from "@/lib/site";
 
 export const metadata = { title: "Submit • NinePlans" };
 
 export default async function SubmitPage() {
   const session = await getServerSession(authOptions);
   if (!session) {
-    redirect(`/login?callbackUrl=${encodeURIComponent("/submit")}`);
+    redirect(`/login?redirect=${encodeURIComponent("/submit")}`);
   }
-  return <SubmitClient categories={CATEGORIES} />;
+  return <SubmitClient />;
 }
