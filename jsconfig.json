@@ -1,26 +1,10 @@
-<<<<<<< HEAD
+ jsconfig.json
 {
-"compilerOptions": {
-"baseUrl": ".",
-"paths": {
-"@/*": ["*"],
-"@/components/*": ["components/*"],
-"@/hooks/*": ["hooks/*"],
-"@/lib/*": ["lib/*"],
-"@/app/*": ["app/*"]
-}
-}
-=======
-{
-"compilerOptions": {
-"baseUrl": ".",
-"paths": {
-"@/*": ["*"],
-"@/components/*": ["components/*"],
-"@/hooks/*": ["hooks/*"],
-"@/lib/*": ["lib/*"],
-"@/app/*": ["app/*"]
-}
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
+  compilerOptions {
+    baseUrl .,
+    paths {
+      @ []
+    }
+  },
+  exclude [node_modules]
 }
