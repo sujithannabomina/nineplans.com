@@ -1,71 +1,75 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useSession, signIn, signOut } from "next-auth/react";
+
+const tabs = ["Posted", "Liked", "Commented", "Saved"];
 
 export default function ProfileClient() {
-  const { data: session, status } = useSession();
+  const [active, setActive] = useState("Posted");
+  const [data, setData] = useState({
+    posted: [],
+    liked: [],
+    commented: [],
+    saved: [],
+  });
 
-  if (status === "loading") {
-    return <div className="text-zinc-300">Loading…</div>;
-  }
+  useEffect(() => {
+    (async () => {
+      const r = await fetch("/api/profile/interactions");
+      const j = await r.json();
+      setData(j);
+    })();
+  }, []);
 
-  if (!session) {
-    return (
-      <div className="rounded-lg border border-white/10 bg-black/30 p-6">
-        <h1 className="mb-2 text-2xl font-semibold">Your Profile</h1>
-        <p className="text-zinc-300">
-          You’re not logged in.{" "}
-          <button
-            onClick={() => signIn("google", { callbackUrl: "/profile" })}
-            className="text-sky-400 underline"
-          >
-            Log in with Google
-          </button>
-          .
-        </p>
-      </div>
-    );
-  }
-
-  const user = session.user;
-  const alias =
-    (typeof window !== "undefined" && localStorage.getItem("np_alias")) || "";
+  const list =
+    active === "Posted"
+      ? data.posted
+      : active === "Liked"
+      ? data.liked
+      : active === "Commented"
+      ? data.commented
+      : data.saved;
 
   return (
-    <div className="rounded-lg border border-white/10 bg-black/30 p-6">
-      <div className="mb-4 flex items-center gap-4">
-        <div className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-800 text-lg font-bold">
-          {user?.image ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={user.image}
-              alt={user.name || "Avatar"}
-              className="h-12 w-12 rounded-full object-cover"
-            />
-          ) : (
-            <span>{(user?.name || "NP").slice(0, 2).toUpperCase()}</span>
-          )}
-        </div>
-        <div>
-          <div className="font-semibold">{alias || user?.name || "User"}</div>
-          <div className="text-sm text-zinc-400">{user?.email}</div>
-        </div>
-      </div>
-
-      <div className="flex flex-wrap items-center gap-3">
+    <div className="rounded-lg border border-zinc-800">
+      <div className="flex flex-wrap gap-2 border-b border-zinc-800 p-3">
+        {tabs.map((t) => (
+          <button
+            key={t}
+            onClick={() => setActive(t)}
+            className={`rounded-md px-3 py-1.5 text-sm ${
+              active === t
+                ? "bg-zinc-800 text-zinc-100"
+                : "text-zinc-300 hover:bg-zinc-800/60"
+            }`}
+          >
+            {t}
+          </button>
+        ))}
         <Link
           href="/profile/settings"
-          className="rounded-md border border-white/10 px-4 py-2 text-sm hover:bg-white/5"
+          className="ml-auto rounded-md border border-zinc-700 px-3 py-1.5 text-sm text-zinc-300 hover:bg-zinc-800"
         >
           Settings
         </Link>
-        <button
-          onClick={() => signOut({ callbackUrl: "/" })}
-          className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium hover:bg-red-500"
-        >
-          Sign out
-        </button>
+      </div>
+
+      <div className="p-4">
+        {list.length === 0 ? (
+          <div className="text-zinc-400">Nothing here yet.</div>
+        ) : (
+          <ul className="space-y-2">
+            {list.map((p) => (
+              <li key={p.id} className="rounded-md border border-zinc-800 p-3">
+                <Link href={`/post/${p.id}`} className="text-sky-300 hover:underline">
+                  {p.title}
+                </Link>
+                <div className="text-xs text-zinc-500">{p.category}</div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

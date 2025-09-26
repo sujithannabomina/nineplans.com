@@ -1,12 +1,12 @@
-import { Suspense } from "react";
 import SearchClient from "./search-client";
 
 export const metadata = { title: "Search • NinePlans" };
 
-export default function SearchPage() {
+export default function Page() {
   return (
-    <Suspense fallback={<div className="px-2 py-4 text-zinc-400">Loading search…</div>}>
+    <div>
+      <h1 className="mb-4 text-3xl font-extrabold">Search</h1>
       <SearchClient />
-    </Suspense>
+    </div>
   );
 }

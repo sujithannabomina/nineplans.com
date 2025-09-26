@@ -1,12 +1,12 @@
-import { Suspense } from "react";
 import ProfileClient from "@/components/ProfileClient";
 
 export const metadata = { title: "Profile • NinePlans" };
 
-export default function ProfilePage() {
+export default function Page() {
   return (
-    <Suspense fallback={<div className="px-2 py-4 text-zinc-400">Loading profile…</div>}>
+    <>
+      <h1 className="mb-4 text-3xl font-extrabold">Profile</h1>
       <ProfileClient />
-    </Suspense>
+    </>
   );
 }

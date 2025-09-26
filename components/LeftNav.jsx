@@ -1,65 +1,40 @@
+"use client";
+
 import Link from "next/link";
-
-const CATEGORIES = [
-  { label: "Confessions", slug: "confessions" },
-  { label: "Relationships", slug: "relationships" },
-  { label: "Work & Career", slug: "work" },
-  { label: "Money", slug: "money" },
-  { label: "Family", slug: "family" },
-  { label: "Health", slug: "health" },
-  { label: "Travel", slug: "travel" },
-  { label: "Tech", slug: "tech" },
-  { label: "Education", slug: "education" },
-  { label: "Other", slug: "other" },
-];
-
-const PAGES = [
-  { label: "FAQ", href: "/faq" },
-  { label: "Community Rules", href: "/rules" },
-  { label: "Policy", href: "/policy" },
-  { label: "Privacy", href: "/privacy" },
-  { label: "Terms", href: "/terms" },
-  { label: "Trademark", href: "/trademark" },
-  { label: "Community", href: "/community" },
-];
+import { usePathname } from "next/navigation";
+import { CATEGORY_LIST } from "@/lib/categories";
 
 export default function LeftNav() {
+  const pathname = usePathname();
+
   return (
-    <nav className="text-sm">
-      <div className="mb-3 font-semibold text-zinc-300">Navigate</div>
-      <div className="space-y-1 mb-6">
-        <Link href="/" className="block px-2 py-1.5 rounded hover:bg-white/5">Home</Link>
-        <Link href="/top" className="block px-2 py-1.5 rounded hover:bg-white/5">Top</Link>
-        <Link href="/search" className="block px-2 py-1.5 rounded hover:bg-white/5">Search</Link>
-        <Link href="/submit" className="block px-2 py-1.5 rounded hover:bg-white/5">Submit</Link>
-        <Link href="/profile" className="block px-2 py-1.5 rounded hover:bg-white/5">Profile</Link>
+    // slimmer, desktop-only, scrolls; no "Navigate" (top header already has it)
+    <aside className="hidden lg:block w-56 pr-2">
+      <div className="sticky top-20 max-h-[calc(100vh-5rem)] overflow-auto leftnav-scroll">
+        <h3 className="px-2 pb-2 text-sm font-semibold text-zinc-400">
+          Categories
+        </h3>
+        <nav className="space-y-0.5">
+          {CATEGORY_LIST.map((c) => {
+            const href = `/c/${c.slug}`;
+            const active =
+              pathname === href || pathname?.startsWith(`${href}/`);
+            return (
+              <Link
+                key={c.slug}
+                href={href}
+                className={`block rounded-md px-2 py-1.5 text-sm ${
+                  active
+                    ? "bg-zinc-800 text-sky-300"
+                    : "text-sky-400 hover:bg-zinc-800/60 hover:text-sky-200"
+                }`}
+              >
+                {c.name}
+              </Link>
+            );
+          })}
+        </nav>
       </div>
-
-      <div className="mb-2 font-semibold text-zinc-300">Categories</div>
-      <div className="space-y-0.5 mb-6">
-        {CATEGORIES.map((c) => (
-          <Link
-            key={c.slug}
-            href={`/c/${c.slug}`}
-            className="block px-2 py-1.5 rounded hover:bg-white/5"
-          >
-            {c.label}
-          </Link>
-        ))}
-      </div>
-
-      <div className="mb-2 font-semibold text-zinc-300">Pages</div>
-      <div className="space-y-0.5">
-        {PAGES.map((p) => (
-          <Link
-            key={p.href}
-            href={p.href}
-            className="block px-2 py-1.5 rounded hover:bg-white/5"
-          >
-            {p.label}
-          </Link>
-        ))}
-      </div>
-    </nav>
+    </aside>
   );
 }
