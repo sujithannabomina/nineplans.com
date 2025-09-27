@@ -1,67 +1,110 @@
 // app/api/profile/interactions/route.js
-export const runtime = "nodejs";
-
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
-export async function GET() {
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
+
+/**
+ * Get a user's interacted content (posted, liked, saved, commented, shared)
+ * Query: ?userId=USER_ID&limit=20
+ *
+ * Collections assumed:
+ * - posts { authorId, ... }
+ * - likes { userId, postId, createdAt }
+ * - saves { userId, postId, createdAt }
+ * - comments { userId, postId, createdAt }
+ * - shares { userId, postId, createdAt }
+ */
+export async function GET(req) {
   try {
-    const session = await getServerSession(authOptions).catch(() => null);
-    const user = session?.user;
+    const { searchParams } = new URL(req.url);
+    const userId = searchParams.get("userId");
+    const limitParam = Number(searchParams.get("limit") || "20");
+    const limit = Number.isFinite(limitParam) ? Math.min(limitParam, 50) : 20;
 
-    if (!user) {
-      // Return empty sets instead of 401 so the UI can render a friendly state.
-      return NextResponse.json({ posted: [], liked: [], commented: [], saved: [] });
+    if (!userId) {
+      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
     }
 
-    const userId = user.id || user.email;
-
-    // 1) Posted
-    const postedSnap = await db
-      .collection("posts")
-      .where("uid", "==", userId)
-      .where("hidden", "==", false)
-      .orderBy("createdAt", "desc")
-      .limit(25)
-      .get();
-
-    const posted = postedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
-
-    // 2) Interactions document under users/{uid}
-    const userDoc = await db.collection("users").doc(userId).get();
-    const {
-      likedPostIds = [],
-      commentedPostIds = [],
-      savedPostIds = [],
-    } = userDoc.exists ? userDoc.data() : {};
-
-    // Helper to batch-load by ids (Firestore allows "in" with up to 10; use chunking)
-    async function fetchPostsByIds(ids) {
-      const unique = Array.from(new Set(ids)).slice(0, 50);
+    // Helper: fetch posts by ids in small batches
+    const fetchPostsByIds = async (ids) => {
+      if (!ids.length) return [];
       const chunks = [];
-      while (unique.length) chunks.push(unique.splice(0, 10));
+      for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
       const results = [];
-      for (const ten of chunks) {
-        const snap = await db
-          .collection("posts")
-          .where("__name__", "in", ten)
-          .get();
-        results.push(...snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      for (const ch of chunks) {
+        const refs = ch.map((id) => db.collection("posts").doc(id));
+        const docs = await db.getAll(...refs);
+        for (const d of docs) {
+          if (d.exists) results.push({ id: d.id, ...d.data() });
+        }
       }
       return results;
-    }
+    };
 
-    const [liked, commented, saved] = await Promise.all([
-      fetchPostsByIds(likedPostIds),
-      fetchPostsByIds(commentedPostIds),
-      fetchPostsByIds(savedPostIds),
-    ]);
+    // Posted by the user
+    const postedSnap = await db
+      .collection("posts")
+      .where("authorId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+    const posted = postedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    return NextResponse.json({ posted, liked, commented, saved });
+    // Liked
+    const likesSnap = await db
+      .collection("likes")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+    const liked = await fetchPostsByIds(
+      likesSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
+    );
+
+    // Saved
+    const savesSnap = await db
+      .collection("saves")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+    const saved = await fetchPostsByIds(
+      savesSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
+    );
+
+    // Commented
+    const commentsSnap = await db
+      .collection("comments")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+    const commented = await fetchPostsByIds(
+      commentsSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
+    );
+
+    // Shared
+    const sharesSnap = await db
+      .collection("shares")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .limit(limit)
+      .get();
+    const shared = await fetchPostsByIds(
+      sharesSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
+    );
+
+    return NextResponse.json({
+      posted,
+      liked,
+      saved,
+      commented,
+      shared,
+    });
   } catch (err) {
-    console.error("GET /api/profile/interactions:", err);
-    return NextResponse.json({ posted: [], liked: [], commented: [], saved: [] });
+    console.error("GET /api/profile/interactions error:", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }
