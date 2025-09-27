@@ -1,65 +1,36 @@
-// app/api/search/route.js
-export const runtime = 'nodejs';
+import { NextResponse } from "next/server";
+import { db } from "@/lib/firebaseAdmin";
 
-import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
+export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
-/**
- * GET /api/search?q=...&category=...&order=liked|commented|viewed|newest&limit=20
- */
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const q = (searchParams.get('q') || '').trim().toLowerCase();
-    const category = (searchParams.get('category') || '').trim();
-    const order = (searchParams.get('order') || 'newest').trim();
-    const limitParam = parseInt(searchParams.get('limit') || '20', 10);
-    const limit = Math.min(Math.max(limitParam, 1), 50);
+    const q = (searchParams.get("q") || "").trim();
+    const category = (searchParams.get("category") || "").trim();
+    const limit = Math.min(Number(searchParams.get("limit") || "20"), 50);
 
-    // Map order to a Firestore field (fallback to createdAt if the field isn't present)
-    const orderFieldMap = {
-      newest: 'createdAt',
-      liked: 'likesCount',
-      commented: 'commentsCount',
-      viewed: 'viewsCount',
-    };
-    const orderByField = orderFieldMap[order] || 'createdAt';
+    let query = db.collection("posts").where("published", "==", true);
+    if (category) query = query.where("category", "==", category);
+    // naive "text search": filter by title/content contains q (Firestore needs full-text via 3rd party for real search)
+    query = query.orderBy("createdAt", "desc").limit(limit);
 
-    let col = adminDb.collection('posts');
-    if (category) col = col.where('category', '==', category);
-
-    let snap;
-    try {
-      snap = await col.orderBy(orderByField, 'desc').limit(limit * 2).get();
-    } catch {
-      // Fallback if ordering field doesn't exist on some docs
-      snap = await col.orderBy('createdAt', 'desc').limit(limit * 2).get();
-    }
-
-    let results = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const snap = await query.get();
+    let items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
     if (q) {
-      // Lightweight in-memory filter across common text fields
-      const fields = ['title', 'content', 'summary', 'tags'];
-      results = results.filter((item) =>
-        fields.some((f) => {
-          const v = item[f];
-          if (!v) return false;
-          if (Array.isArray(v)) return v.join(' ').toLowerCase().includes(q);
-          return String(v).toLowerCase().includes(q);
-        })
+      const qLower = q.toLowerCase();
+      items = items.filter(
+        (p) =>
+          (p.title || "").toLowerCase().includes(qLower) ||
+          (p.content || "").toLowerCase().includes(qLower)
       );
     }
 
-    // Trim to requested limit
-    results = results.slice(0, limit);
-
-    return NextResponse.json({ ok: true, count: results.length, results });
+    return NextResponse.json({ items });
   } catch (err) {
-    console.error('[search] error:', err);
-    return NextResponse.json(
-      { ok: false, error: 'SEARCH_FAILED' },
-      { status: 500 }
-    );
+    console.error("GET /api/search error:", err);
+    return NextResponse.json({ error: "Internal error" }, { status: 500 });
   }
 }

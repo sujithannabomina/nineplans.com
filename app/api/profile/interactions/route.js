@@ -1,21 +1,9 @@
-// app/api/profile/interactions/route.js
 import { NextResponse } from "next/server";
 import { db } from "@/lib/firebaseAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * Get a user's interacted content (posted, liked, saved, commented, shared)
- * Query: ?userId=USER_ID&limit=20
- *
- * Collections assumed:
- * - posts { authorId, ... }
- * - likes { userId, postId, createdAt }
- * - saves { userId, postId, createdAt }
- * - comments { userId, postId, createdAt }
- * - shares { userId, postId, createdAt }
- */
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -23,11 +11,8 @@ export async function GET(req) {
     const limitParam = Number(searchParams.get("limit") || "20");
     const limit = Number.isFinite(limitParam) ? Math.min(limitParam, 50) : 20;
 
-    if (!userId) {
-      return NextResponse.json({ error: "Missing userId" }, { status: 400 });
-    }
+    if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
 
-    // Helper: fetch posts by ids in small batches
     const fetchPostsByIds = async (ids) => {
       if (!ids.length) return [];
       const chunks = [];
@@ -36,14 +21,11 @@ export async function GET(req) {
       for (const ch of chunks) {
         const refs = ch.map((id) => db.collection("posts").doc(id));
         const docs = await db.getAll(...refs);
-        for (const d of docs) {
-          if (d.exists) results.push({ id: d.id, ...d.data() });
-        }
+        for (const d of docs) if (d.exists) results.push({ id: d.id, ...d.data() });
       }
       return results;
     };
 
-    // Posted by the user
     const postedSnap = await db
       .collection("posts")
       .where("authorId", "==", userId)
@@ -52,29 +34,22 @@ export async function GET(req) {
       .get();
     const posted = postedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    // Liked
     const likesSnap = await db
       .collection("likes")
       .where("userId", "==", userId)
       .orderBy("createdAt", "desc")
       .limit(limit)
       .get();
-    const liked = await fetchPostsByIds(
-      likesSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
-    );
+    const liked = await fetchPostsByIds(likesSnap.docs.map((d) => d.data()?.postId).filter(Boolean));
 
-    // Saved
     const savesSnap = await db
       .collection("saves")
       .where("userId", "==", userId)
       .orderBy("createdAt", "desc")
       .limit(limit)
       .get();
-    const saved = await fetchPostsByIds(
-      savesSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
-    );
+    const saved = await fetchPostsByIds(savesSnap.docs.map((d) => d.data()?.postId).filter(Boolean));
 
-    // Commented
     const commentsSnap = await db
       .collection("comments")
       .where("userId", "==", userId)
@@ -85,24 +60,15 @@ export async function GET(req) {
       commentsSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
     );
 
-    // Shared
     const sharesSnap = await db
       .collection("shares")
       .where("userId", "==", userId)
       .orderBy("createdAt", "desc")
       .limit(limit)
       .get();
-    const shared = await fetchPostsByIds(
-      sharesSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
-    );
+    const shared = await fetchPostsByIds(sharesSnap.docs.map((d) => d.data()?.postId).filter(Boolean));
 
-    return NextResponse.json({
-      posted,
-      liked,
-      saved,
-      commented,
-      shared,
-    });
+    return NextResponse.json({ posted, liked, saved, commented, shared });
   } catch (err) {
     console.error("GET /api/profile/interactions error:", err);
     return NextResponse.json({ error: "Internal error" }, { status: 500 });

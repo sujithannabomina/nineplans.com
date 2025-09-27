@@ -1,14 +1,9 @@
-// app/api/post/route.js
 import { NextResponse } from "next/server";
 import { db, Timestamp, FieldValue } from "@/lib/firebaseAdmin";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * Create a new post
- * Body: { title, content, category, authorId, tags? }
- */
 export async function POST(req) {
   try {
     const body = await req.json();
@@ -44,10 +39,6 @@ export async function POST(req) {
   }
 }
 
-/**
- * Get a post (by id) or list posts (by category/author)
- * Query: ?id=POST_ID | ?category=...&authorId=...&limit=20
- */
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
@@ -59,9 +50,7 @@ export async function GET(req) {
 
     if (id) {
       const doc = await db.collection("posts").doc(id).get();
-      if (!doc.exists) {
-        return NextResponse.json({ error: "Not found" }, { status: 404 });
-      }
+      if (!doc.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
       return NextResponse.json({ id: doc.id, ...doc.data() });
     }
 
