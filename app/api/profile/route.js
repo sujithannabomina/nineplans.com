@@ -1,68 +1,48 @@
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+// app/api/profile/route.js
+export const runtime = 'nodejs';
 
-import { NextResponse } from "next/server";
-import { adminDb, adminAuth } from "@/lib/firebaseAdmin";
+import { NextResponse } from 'next/server';
+import getAdmin from '@/lib/firebaseAdmin';
 
-/**
- * GET /api/profile
- * Optional query: ?uid=<userId>
- * If you’re using Firebase Auth on the client, send an ID token in:
- * Authorization: Bearer <firebase-id-token>
- */
-export async function GET(request) {
+function badReq(msg) {
+  return NextResponse.json({ error: msg }, { status: 400 });
+}
+
+export async function GET(req) {
   try {
-    const { searchParams } = new URL(request.url);
-    let uid = searchParams.get("uid") || null;
+    const { searchParams } = new URL(req.url);
+    const uid = searchParams.get('uid');
+    if (!uid) return badReq('uid is required');
 
-    // If an ID token is provided, use it as source of truth for uid
-    const authHeader = request.headers.get("authorization") || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : null;
+    const { adminDb } = getAdmin();
 
-    if (token) {
-      try {
-        const decoded = await adminAuth.verifyIdToken(token);
-        uid = decoded.uid;
-      } catch {
-        // Fall back to ?uid if verification fails (keeps build-time happy)
-      }
+    const userDoc = await adminDb.collection('users').doc(uid).get();
+    if (!userDoc.exists) {
+      return NextResponse.json({ exists: false }, { status: 200 });
     }
 
-    if (!uid) {
-      return NextResponse.json(
-        { ok: false, error: "Missing uid. Provide ?uid=... or a valid Bearer token." },
-        { status: 400 }
-      );
-    }
+    const profile = userDoc.data();
 
-    // Fetch a basic profile document
-    const profileSnap = await adminDb.collection("profiles").doc(uid).get();
-    const profile = profileSnap.exists ? profileSnap.data() : { uid };
-
-    // Example interaction rollups (adjust collection names to match your schema)
-    const [postedQ, likedQ, savedQ, commentedQ, sharedQ] = await Promise.all([
-      adminDb.collection("posts").where("authorId", "==", uid).orderBy("createdAt", "desc").limit(20).get(),
-      adminDb.collection("likes").where("userId", "==", uid).orderBy("createdAt", "desc").limit(20).get(),
-      adminDb.collection("saves").where("userId", "==", uid).orderBy("createdAt", "desc").limit(20).get(),
-      adminDb.collection("comments").where("userId", "==", uid).orderBy("createdAt", "desc").limit(20).get(),
-      adminDb.collection("shares").where("userId", "==", uid).orderBy("createdAt", "desc").limit(20).get(),
+    // Minimal interaction summary (optional)
+    const [likesSnap, postsSnap, commentsSnap, sharesSnap] = await Promise.all([
+      adminDb.collection('likes').where('userId', '==', uid).limit(1).get(),
+      adminDb.collection('posts').where('authorId', '==', uid).limit(1).get(),
+      adminDb.collection('comments').where('userId', '==', uid).limit(1).get(),
+      adminDb.collection('shares').where('userId', '==', uid).limit(1).get(),
     ]);
 
-    const toList = (qs) => qs.docs.map((d) => ({ id: d.id, ...d.data() }));
-
     return NextResponse.json({
-      ok: true,
+      exists: true,
       profile,
-      interactions: {
-        posted: toList(postedQ),
-        liked: toList(likedQ),
-        saved: toList(savedQ),
-        commented: toList(commentedQ),
-        shared: toList(sharedQ),
+      summary: {
+        hasLikes: !likesSnap.empty,
+        hasPosts: !postsSnap.empty,
+        hasComments: !commentsSnap.empty,
+        hasShares: !sharesSnap.empty,
       },
     });
   } catch (err) {
-    console.error("PROFILE_API_ERROR", err);
-    return NextResponse.json({ ok: false, error: "Server error" }, { status: 500 });
+    console.error('GET /api/profile error:', err);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

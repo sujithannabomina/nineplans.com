@@ -1,76 +1,46 @@
-import { NextResponse } from "next/server";
-import { db } from "@/lib/firebaseAdmin";
+// app/api/profile/interactions/route.js
+export const runtime = 'nodejs';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+import { NextResponse } from 'next/server';
+import getAdmin from '@/lib/firebaseAdmin';
 
+function badReq(msg) {
+  return NextResponse.json({ error: msg }, { status: 400 });
+}
+
+/**
+ * GET /api/profile/interactions?uid=USER_ID&limit=20
+ * Returns lists of post IDs the user interacted with.
+ */
 export async function GET(req) {
   try {
+    const { adminDb } = getAdmin();
     const { searchParams } = new URL(req.url);
-    const userId = searchParams.get("userId");
-    const limitParam = Number(searchParams.get("limit") || "20");
-    const limit = Number.isFinite(limitParam) ? Math.min(limitParam, 50) : 20;
 
-    if (!userId) return NextResponse.json({ error: "Missing userId" }, { status: 400 });
+    const uid = searchParams.get('uid');
+    if (!uid) return badReq('uid is required');
 
-    const fetchPostsByIds = async (ids) => {
-      if (!ids.length) return [];
-      const chunks = [];
-      for (let i = 0; i < ids.length; i += 10) chunks.push(ids.slice(i, i + 10));
-      const results = [];
-      for (const ch of chunks) {
-        const refs = ch.map((id) => db.collection("posts").doc(id));
-        const docs = await db.getAll(...refs);
-        for (const d of docs) if (d.exists) results.push({ id: d.id, ...d.data() });
-      }
-      return results;
-    };
+    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10) || 20, 100);
 
-    const postedSnap = await db
-      .collection("posts")
-      .where("authorId", "==", userId)
-      .orderBy("createdAt", "desc")
-      .limit(limit)
-      .get();
-    const posted = postedSnap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    const [likes, comments, shares, saved, posts] = await Promise.all([
+      adminDb.collection('likes').where('userId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
+      adminDb.collection('comments').where('userId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
+      adminDb.collection('shares').where('userId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
+      adminDb.collection('saved').where('userId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
+      adminDb.collection('posts').where('authorId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
+    ]);
 
-    const likesSnap = await db
-      .collection("likes")
-      .where("userId", "==", userId)
-      .orderBy("createdAt", "desc")
-      .limit(limit)
-      .get();
-    const liked = await fetchPostsByIds(likesSnap.docs.map((d) => d.data()?.postId).filter(Boolean));
+    const mapList = (snap, field = 'postId') => snap.docs.map(d => ({ id: d.id, ...d.data() }))
 
-    const savesSnap = await db
-      .collection("saves")
-      .where("userId", "==", userId)
-      .orderBy("createdAt", "desc")
-      .limit(limit)
-      .get();
-    const saved = await fetchPostsByIds(savesSnap.docs.map((d) => d.data()?.postId).filter(Boolean));
-
-    const commentsSnap = await db
-      .collection("comments")
-      .where("userId", "==", userId)
-      .orderBy("createdAt", "desc")
-      .limit(limit)
-      .get();
-    const commented = await fetchPostsByIds(
-      commentsSnap.docs.map((d) => d.data()?.postId).filter(Boolean)
-    );
-
-    const sharesSnap = await db
-      .collection("shares")
-      .where("userId", "==", userId)
-      .orderBy("createdAt", "desc")
-      .limit(limit)
-      .get();
-    const shared = await fetchPostsByIds(sharesSnap.docs.map((d) => d.data()?.postId).filter(Boolean));
-
-    return NextResponse.json({ posted, liked, saved, commented, shared });
+    return NextResponse.json({
+      liked: mapList(likes),
+      commented: mapList(comments),
+      shared: mapList(shares),
+      saved: mapList(saved),
+      posted: posts.docs.map(d => ({ id: d.id, ...d.data() })),
+    });
   } catch (err) {
-    console.error("GET /api/profile/interactions error:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    console.error('GET /api/profile/interactions error:', err);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }

@@ -1,90 +1,68 @@
 // app/search/search-client.jsx
-"use client";
+'use client';
 
-import { useEffect, useMemo, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import Feed from "@/components/Feed";
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 
-export default function SearchClient({
-  initialQuery = "",
-  initialCategory = "",
-  categories = [],
-}) {
-  const router = useRouter();
-  const params = useSearchParams();
+const CATEGORIES = [
+  'confessions','posts','product reviews','movie reviews','place reviews',
+  'post ideas','post ads','Business info','Sports','Science','Automobile',
+  'Education','Anime','Games'
+];
 
-  const cats = useMemo(
-    () => (Array.isArray(categories) ? categories : []),
-    [categories]
-  );
+export default function SearchClient() {
+  const sp = useSearchParams();
+  const [q, setQ] = useState(sp.get('q') || '');
+  const [category, setCategory] = useState(sp.get('category') || '');
+  const [results, setResults] = useState([]);
 
-  const [q, setQ] = useState(initialQuery);
-  const [cat, setCat] = useState(
-    cats.includes(initialCategory) ? initialCategory : ""
-  );
+  const runSearch = async () => {
+    const params = new URLSearchParams();
+    if (q) params.set('q', q);
+    if (category) params.set('category', category);
+    const res = await fetch(`/api/search?${params.toString()}`);
+    const json = await res.json();
+    setResults(json.data || []);
+  };
 
-  // keep state in sync with URL changes (e.g. back/forward)
   useEffect(() => {
-    const urlQ = params.get("q") ?? "";
-    const urlCat = params.get("cat") ?? "";
-    setQ(urlQ);
-    setCat(cats.includes(urlCat) ? urlCat : "");
-  }, [params, cats]);
-
-  const apply = () => {
-    const sp = new URLSearchParams();
-    if (q) sp.set("q", q);
-    if (cat) sp.set("cat", cat);
-    router.push(`/search${sp.toString() ? `?${sp}` : ""}`);
-  };
-
-  const onSubmit = (e) => {
-    e.preventDefault();
-    apply();
-  };
+    runSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
-    <div className="grid gap-4">
-      <h1 className="text-3xl font-bold">Search</h1>
-
-      <form onSubmit={onSubmit} className="flex flex-wrap gap-2">
+    <div className="p-6">
+      <div className="flex gap-2 mb-4">
         <input
+          className="border rounded p-2 flex-1"
+          placeholder="Search…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
-          placeholder="Search titles & text…"
-          className="min-w-[260px] grow rounded-md border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-200"
         />
         <select
-          value={cat}
-          onChange={(e) => setCat(e.target.value)}
-          className="rounded-md border border-zinc-700 bg-black px-3 py-2 text-sm text-zinc-200"
+          className="border rounded p-2"
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
         >
           <option value="">All categories</option>
-          {cats.map((c) => (
-            <option key={c} value={c}>
-              {c}
-            </option>
-          ))}
+          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
         </select>
-        <button
-          type="submit"
-          className="rounded-md border border-zinc-700 px-3 py-2 text-sm hover:bg-zinc-900"
-        >
-          Search
-        </button>
-      </form>
-
-      <div className="text-sm text-zinc-400">
-        Query: <span className="text-zinc-200">{q || "—"}</span>
-        {cat ? (
-          <>
-            {" "}| Category: <span className="text-zinc-200">{cat}</span>
-          </>
-        ) : null}
+        <button className="border rounded px-3" onClick={runSearch}>Search</button>
       </div>
 
-      {/* TODO: replace with real results; empty feed shows a friendly state */}
-      <Feed posts={[]} />
+      {results.length === 0 ? (
+        <p>No results.</p>
+      ) : (
+        <ul className="space-y-3">
+          {results.map((r) => (
+            <li key={r.id} className="border rounded p-3">
+              <div className="text-sm opacity-70 mb-1">{r.category}</div>
+              <div className="font-semibold">{r.title}</div>
+              <div className="text-sm line-clamp-2">{r.body}</div>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }

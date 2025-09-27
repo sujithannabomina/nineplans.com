@@ -1,12 +1,14 @@
-import SearchClient from "./search-client";
+// app/search/page.jsx
+'use client';
+export const dynamic = 'force-dynamic';
 
-export const metadata = { title: "Search • NinePlans" };
+import { Suspense } from 'react';
+import SearchClient from './search-client';
 
-export default function Page() {
+export default function SearchPage() {
   return (
-    <div>
-      <h1 className="mb-4 text-3xl font-extrabold">Search</h1>
+    <Suspense fallback={<div className="p-4">Loading search…</div>}>
       <SearchClient />
-    </div>
+    </Suspense>
   );
 }
