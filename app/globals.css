@@ -1,16 +1,42 @@
+/* app/globals.css */
+/* Tailwind layers */
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-/* ---- Your global tweaks below (optional) ---- */
-html, body, #__next {
+/* Dark theme foundation */
+:root {
+  color-scheme: dark;
+}
+
+html, body {
   height: 100%;
 }
 
-:root {
-  --np-sidebar-width: 260px; /* example var used by your layout */
+body {
+  @apply bg-zinc-950 text-zinc-100 antialiased;
 }
 
-* {
-  -webkit-tap-highlight-color: transparent;
+/* Simple containers & cards */
+.container {
+  @apply mx-auto max-w-6xl px-4;
+}
+
+.card {
+  @apply rounded-xl border border-zinc-800 bg-zinc-900/50;
+}
+
+.btn {
+  @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-medium;
+}
+.btn-primary {
+  @apply btn bg-sky-600 text-white hover:bg-sky-500;
+}
+.btn-ghost {
+  @apply btn bg-transparent hover:bg-zinc-800/60;
+}
+
+/* Links */
+a {
+  @apply text-sky-400 hover:text-sky-300;
 }

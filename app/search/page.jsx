@@ -1,13 +1,14 @@
 // app/search/page.jsx
-'use client';
+export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
 import { Suspense } from 'react';
-import SearchClient from './search-client';
+import SearchClient from '@/components/SearchClient';
 
-export default function SearchPage() {
+export default function Page() {
+  // Suspense is required around useSearchParams readers
   return (
-    <Suspense fallback={<div className="p-4">Loading search…</div>}>
+    <Suspense fallback={<div />}>
       <SearchClient />
     </Suspense>
   );

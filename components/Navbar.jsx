@@ -1,44 +1,101 @@
+// components/Navbar.jsx
 "use client";
 
 import Link from "next/link";
-import MobileCategories from "@/components/MobileCategories";
+import Image from "next/image";
+import { usePathname } from "next/navigation";
+import { useSession, signIn, signOut } from "next-auth/react";
+
+const nav = [
+  { href: "/", label: "Home" },
+  { href: "/top", label: "Top" },
+  { href: "/search", label: "Search" },
+  { href: "/submit", label: "Submit" },
+];
+
+function isActive(pathname, href) {
+  if (href === "/") return pathname === "/";
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 export default function Navbar() {
+  const pathname = usePathname();
+  const { data: session } = useSession();
+
   return (
-    <header className="border-b border-zinc-800 bg-zinc-950/60 backdrop-blur">
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3">
-        <Link href="/" className="flex items-center gap-2">
-          {/* Use your logo from /public; plain <img> avoids build errors if file name changes */}
-          <img
-            src="/logo.png"
-            alt="NinePlans"
-            className="h-8 w-8 rounded-md bg-zinc-800 object-contain"
-          />
-          <span className="text-lg font-semibold text-zinc-200">NinePlans</span>
-        </Link>
-
-        <nav className="hidden gap-4 text-zinc-200 md:flex">
-          <Link href="/" className="hover:text-sky-300">Home</Link>
-          <Link href="/top" className="hover:text-sky-300">Top</Link>
-          <Link href="/search" className="hover:text-sky-300">Search</Link>
-          <Link
-            href="/submit"
-            className="rounded-md bg-sky-600 px-3 py-1.5 text-white hover:bg-sky-500"
-          >
-            Submit
+    <header className="sticky top-0 z-40 border-b border-zinc-900/70 bg-zinc-950/90 backdrop-blur">
+      <div className="container flex h-14 items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          {/* Uses your logo from /public (logo.svg or logo.png). Falls back to text. */}
+          <Link href="/" className="flex items-center gap-2">
+            {/* Try svg first; if missing, Next/Image gracefully fails to load */}
+            <Image
+              src="/logo.svg"
+              alt="NinePlans"
+              width={28}
+              height={28}
+              className="rounded-md"
+              onError={(e) => {
+                // If /logo.svg isn't there, swap to /logo.png
+                const img = e.currentTarget;
+                if (!img.dataset.fallback) {
+                  img.dataset.fallback = "1";
+                  img.src = "/logo.png";
+                }
+              }}
+            />
+            <span className="text-lg font-semibold tracking-tight">NinePlans</span>
           </Link>
-          <Link href="/profile" className="hover:text-sky-300">Profile</Link>
-        </nav>
 
-        {/* Mobile: Categories launcher + key links */}
-        <div className="flex items-center gap-2 md:hidden">
-          <MobileCategories />
-          <Link
-            href="/submit"
-            className="rounded-md bg-sky-600 px-3 py-1.5 text-white"
-          >
-            Submit
-          </Link>
+          <nav className="hidden md:flex items-center gap-1">
+            {nav.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                className={`rounded-md px-3 py-2 text-sm ${
+                  isActive(pathname, item.href)
+                    ? "bg-zinc-800 text-zinc-100"
+                    : "text-zinc-300 hover:bg-zinc-800/70 hover:text-zinc-100"
+                }`}
+              >
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        </div>
+
+        <div className="flex items-center gap-2">
+          {session?.user ? (
+            <>
+              <Link
+                href="/profile"
+                className="btn-ghost text-sm text-zinc-200 hover:text-white"
+              >
+                Profile
+              </Link>
+              <button
+                className="btn-ghost text-sm text-zinc-300 hover:text-white"
+                onClick={() => signOut({ callbackUrl: "/" })}
+              >
+                Sign out
+              </button>
+              <Link href="/submit" className="btn-primary text-sm">
+                Write a post
+              </Link>
+            </>
+          ) : (
+            <>
+              <button
+                className="btn-ghost text-sm text-zinc-300 hover:text-white"
+                onClick={() => signIn(undefined, { callbackUrl: "/submit" })}
+              >
+                Log in
+              </button>
+              <Link href="/submit" className="btn-primary text-sm">
+                Write a post
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>
