@@ -2,10 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Page baseline */
-html, body { height: 100%; }
+/* ---- Your global tweaks below (optional) ---- */
+html, body, #__next {
+  height: 100%;
+}
 
-/* Subtle custom scrollbar for the left nav */
-.leftnav-scroll::-webkit-scrollbar { width: 6px; }
-.leftnav-scroll::-webkit-scrollbar-thumb { background-color: #52525b; border-radius: 9999px; }
-.leftnav-scroll { scrollbar-width: thin; scrollbar-color: #52525b transparent; }
+:root {
+  --np-sidebar-width: 260px; /* example var used by your layout */
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
