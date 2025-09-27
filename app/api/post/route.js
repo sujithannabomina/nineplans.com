@@ -1,68 +1,70 @@
-import { NextResponse } from "next/server";
-import { db, Timestamp, FieldValue } from "@/lib/firebaseAdmin";
+// app/api/post/route.js
+export const runtime = 'nodejs';
 
-export const runtime = "nodejs";
-export const dynamic = "force-dynamic";
+import { NextResponse } from 'next/server';
+import getAdmin from '@/lib/firebaseAdmin';
+
+function badReq(msg) {
+  return NextResponse.json({ error: msg }, { status: 400 });
+}
 
 export async function POST(req) {
   try {
-    const body = await req.json();
-    const { title, content, category, authorId, tags = [] } = body || {};
+    const { adminDb, Timestamp } = getAdmin();
 
-    if (!title || !content || !category || !authorId) {
-      return NextResponse.json(
-        { error: "Missing required fields: title, content, category, authorId" },
-        { status: 400 }
-      );
+    const payload = await req.json().catch(() => ({}));
+    const { title, body, category, authorId } = payload || {};
+
+    if (!title || !body || !category || !authorId) {
+      return badReq('title, body, category, authorId are required');
     }
 
-    const docRef = await db.collection("posts").add({
+    const now = Timestamp.now();
+    const docRef = await adminDb.collection('posts').add({
       title: String(title).trim(),
-      content,
-      category,
-      authorId,
-      tags,
-      likeCount: 0,
-      commentCount: 0,
-      shareCount: 0,
-      viewCount: 0,
-      createdAt: Timestamp.now(),
-      updatedAt: FieldValue.serverTimestamp(),
-      published: true,
+      body: String(body).trim(),
+      category: String(category).trim(),
+      authorId: String(authorId).trim(),
+      createdAt: now,
+      updatedAt: now,
+      likes: 0,
+      commentsCount: 0,
+      views: 0,
+      status: 'published',
     });
 
-    const snap = await docRef.get();
-    return NextResponse.json({ id: docRef.id, ...snap.data() }, { status: 201 });
+    return NextResponse.json({ id: docRef.id }, { status: 201 });
   } catch (err) {
-    console.error("POST /api/post error:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    console.error('POST /api/post error:', err);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }
 
 export async function GET(req) {
   try {
-    const { searchParams } = new URL(req.url);
-    const id = searchParams.get("id");
-    const category = searchParams.get("category");
-    const authorId = searchParams.get("authorId");
-    const limitParam = Number(searchParams.get("limit") || "20");
-    const limit = Number.isFinite(limitParam) ? Math.min(limitParam, 50) : 20;
+    const { adminDb } = getAdmin();
 
-    if (id) {
-      const doc = await db.collection("posts").doc(id).get();
-      if (!doc.exists) return NextResponse.json({ error: "Not found" }, { status: 404 });
-      return NextResponse.json({ id: doc.id, ...doc.data() });
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get('category');
+    const limitRaw = searchParams.get('limit');
+    const limit = Math.min(parseInt(limitRaw || '20', 10) || 20, 100);
+
+    let query = adminDb.collection('posts').orderBy('createdAt', 'desc').limit(limit);
+    if (category) {
+      // If you don’t have a composite index for category + createdAt, you may need to create one in Firestore.
+      query = adminDb
+        .collection('posts')
+        .where('category', '==', category)
+        .orderBy('createdAt', 'desc')
+        .limit(limit);
     }
 
-    let q = db.collection("posts").orderBy("createdAt", "desc").limit(limit);
-    if (category) q = q.where("category", "==", category);
-    if (authorId) q = q.where("authorId", "==", authorId);
+    const snap = await query.get();
+    const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
-    const snap = await q.get();
-    const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-    return NextResponse.json({ items });
+    return NextResponse.json({ data }, { status: 200 });
   } catch (err) {
-    console.error("GET /api/post error:", err);
-    return NextResponse.json({ error: "Internal error" }, { status: 500 });
+    console.error('GET /api/post error:', err);
+    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
   }
 }
