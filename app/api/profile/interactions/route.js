@@ -1,46 +1,41 @@
 // app/api/profile/interactions/route.js
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import getAdmin from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
 
-function badReq(msg) {
-  return NextResponse.json({ error: msg }, { status: 400 });
-}
-
-/**
- * GET /api/profile/interactions?uid=USER_ID&limit=20
- * Returns lists of post IDs the user interacted with.
- */
-export async function GET(req) {
+export async function GET(request) {
   try {
-    const { adminDb } = getAdmin();
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
+    const userId = (searchParams.get('userId') || '').trim();
+    if (!userId) {
+      return NextResponse.json({ ok: false, error: 'Missing userId' }, { status: 400 });
+    }
 
-    const uid = searchParams.get('uid');
-    if (!uid) return badReq('uid is required');
+    // Fetch items the user has interacted with
+    const [likedSnap, savedSnap, commentedSnap, viewedSnap, sharedSnap] =
+      await Promise.all([
+        adminDb.collection('likes').where('userId', '==', userId).limit(100).get(),
+        adminDb.collection('saves').where('userId', '==', userId).limit(100).get(),
+        adminDb.collection('comments').where('userId', '==', userId).limit(100).get(),
+        adminDb.collection('views').where('userId', '==', userId).limit(100).get(),
+        adminDb.collection('shares').where('userId', '==', userId).limit(100).get(),
+      ]);
 
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10) || 20, 100);
-
-    const [likes, comments, shares, saved, posts] = await Promise.all([
-      adminDb.collection('likes').where('userId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
-      adminDb.collection('comments').where('userId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
-      adminDb.collection('shares').where('userId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
-      adminDb.collection('saved').where('userId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
-      adminDb.collection('posts').where('authorId', '==', uid).orderBy('createdAt', 'desc').limit(limit).get(),
-    ]);
-
-    const mapList = (snap, field = 'postId') => snap.docs.map(d => ({ id: d.id, ...d.data() }))
+    const mapDocs = snap => snap.docs.map(d => ({ id: d.id, ...d.data() }));
 
     return NextResponse.json({
-      liked: mapList(likes),
-      commented: mapList(comments),
-      shared: mapList(shares),
-      saved: mapList(saved),
-      posted: posts.docs.map(d => ({ id: d.id, ...d.data() })),
+      ok: true,
+      userId,
+      liked: mapDocs(likedSnap),
+      saved: mapDocs(savedSnap),
+      commented: mapDocs(commentedSnap),
+      viewed: mapDocs(viewedSnap),
+      shared: mapDocs(sharedSnap),
     });
   } catch (err) {
     console.error('GET /api/profile/interactions error:', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }
 }

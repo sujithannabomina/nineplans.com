@@ -1,51 +1,47 @@
 // app/api/search/route.js
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import getAdmin from '@/lib/firebaseAdmin';
+import { adminDb } from '@/lib/firebaseAdmin';
 
-function badReq(msg) {
-  return NextResponse.json({ error: msg }, { status: 400 });
-}
-
-/**
- * GET /api/search?q=term&category=Sports&limit=20
- * Basic Firestore search (prefix-ish on title/body if you store searchable fields).
- * Consider storing a "keywords" array or integrating with a search service for better results.
- */
-export async function GET(req) {
+export async function GET(request) {
   try {
-    const { adminDb } = getAdmin();
-    const { searchParams } = new URL(req.url);
+    const { searchParams } = new URL(request.url);
+    const q = (searchParams.get('q') || '').toLowerCase().trim();
+    const category = (searchParams.get('category') || '').toLowerCase().trim();
 
-    const q = (searchParams.get('q') || '').trim();
-    const category = (searchParams.get('category') || '').trim();
-    const limit = Math.min(parseInt(searchParams.get('limit') || '20', 10) || 20, 50);
+    let query = adminDb.collection('posts');
 
-    let query = adminDb.collection('posts').orderBy('createdAt', 'desc').limit(limit);
-
-    if (category) {
-      query = adminDb.collection('posts')
-        .where('category', '==', category)
-        .orderBy('createdAt', 'desc')
-        .limit(limit);
+    if (category && category !== 'all' && category !== 'all categories') {
+      query = query.where('category', '==', category);
     }
 
-    // Simple filter after fetch (inefficient for huge datasets — add indexes/keywords for real usage)
-    const snap = await query.get();
-    let results = snap.docs.map(d => ({ id: d.id, ...d.data() }));
-
+    // Prefer keyword search if provided
     if (q) {
-      const qLower = q.toLowerCase();
-      results = results.filter(p =>
-        (p.title || '').toLowerCase().includes(qLower) ||
-        (p.body || '').toLowerCase().includes(qLower)
-      );
+      // naive tokenization to use array-contains-any (up to 10 terms)
+      const tokens = Array.from(
+        new Set(q.replace(/[^a-z0-9\s]+/g, ' ').split(/\s+/).filter(Boolean))
+      ).slice(0, 10);
+
+      if (tokens.length) {
+        query = query.where('keywords', 'array-contains-any', tokens);
+      }
     }
 
-    return NextResponse.json({ data: results });
+    query = query.orderBy('createdAt', 'desc').limit(50);
+    const snap = await query.get();
+
+    const results = snap.docs.map(d => ({
+      id: d.id,
+      ...d.data(),
+      createdAt: d.get('createdAt')?.toDate?.()?.toISOString?.() || null,
+      updatedAt: d.get('updatedAt')?.toDate?.()?.toISOString?.() || null,
+    }));
+
+    return NextResponse.json({ ok: true, results });
   } catch (err) {
     console.error('GET /api/search error:', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }
 }

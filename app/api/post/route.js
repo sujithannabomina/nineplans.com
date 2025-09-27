@@ -1,70 +1,53 @@
 // app/api/post/route.js
 export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
 import { NextResponse } from 'next/server';
-import getAdmin from '@/lib/firebaseAdmin';
+import { adminDb, Timestamp } from '@/lib/firebaseAdmin';
 
-function badReq(msg) {
-  return NextResponse.json({ error: msg }, { status: 400 });
-}
-
-export async function POST(req) {
+export async function POST(request) {
   try {
-    const { adminDb, Timestamp } = getAdmin();
+    const body = await request.json();
+    const {
+      title = '',
+      text = '',
+      category = 'confessions',
+      alias = 'Anonymous',
+      userId = null, // optional
+    } = body || {};
 
-    const payload = await req.json().catch(() => ({}));
-    const { title, body, category, authorId } = payload || {};
-
-    if (!title || !body || !category || !authorId) {
-      return badReq('title, body, category, authorId are required');
+    if (!title.trim() || !text.trim()) {
+      return NextResponse.json({ ok: false, error: 'Missing title or text' }, { status: 400 });
     }
 
     const now = Timestamp.now();
-    const docRef = await adminDb.collection('posts').add({
-      title: String(title).trim(),
-      body: String(body).trim(),
-      category: String(category).trim(),
-      authorId: String(authorId).trim(),
+    const doc = {
+      title: title.trim(),
+      text: text.trim(),
+      category: category.trim().toLowerCase(),
+      alias: alias.trim() || 'Anonymous',
+      userId: userId || null,
       createdAt: now,
       updatedAt: now,
       likes: 0,
       commentsCount: 0,
       views: 0,
-      status: 'published',
-    });
+      // simple keyword field to enable basic contains-any search
+      keywords: Array.from(
+        new Set(
+          (title + ' ' + text)
+            .toLowerCase()
+            .replace(/[^a-z0-9\s]+/g, ' ')
+            .split(/\s+/)
+            .filter(Boolean)
+        )
+      ),
+    };
 
-    return NextResponse.json({ id: docRef.id }, { status: 201 });
+    const ref = await adminDb.collection('posts').add(doc);
+    return NextResponse.json({ ok: true, id: ref.id });
   } catch (err) {
     console.error('POST /api/post error:', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
-  }
-}
-
-export async function GET(req) {
-  try {
-    const { adminDb } = getAdmin();
-
-    const { searchParams } = new URL(req.url);
-    const category = searchParams.get('category');
-    const limitRaw = searchParams.get('limit');
-    const limit = Math.min(parseInt(limitRaw || '20', 10) || 20, 100);
-
-    let query = adminDb.collection('posts').orderBy('createdAt', 'desc').limit(limit);
-    if (category) {
-      // If you don’t have a composite index for category + createdAt, you may need to create one in Firestore.
-      query = adminDb
-        .collection('posts')
-        .where('category', '==', category)
-        .orderBy('createdAt', 'desc')
-        .limit(limit);
-    }
-
-    const snap = await query.get();
-    const data = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
-
-    return NextResponse.json({ data }, { status: 200 });
-  } catch (err) {
-    console.error('GET /api/post error:', err);
-    return NextResponse.json({ error: 'Internal error' }, { status: 500 });
+    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
   }
 }
