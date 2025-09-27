@@ -1,40 +1,65 @@
 // app/api/search/route.js
-export const runtime = "nodejs";
+export const runtime = 'nodejs';
 
-import { NextResponse } from "next/server";
-import { db } from "@/lib/firebaseAdmin";
-import { CATEGORY_BY_SLUG } from "@/lib/categories";
+import { NextResponse } from 'next/server';
+import { adminDb } from '@/lib/firebaseAdmin';
 
+/**
+ * GET /api/search?q=...&category=...&order=liked|commented|viewed|newest&limit=20
+ */
 export async function GET(req) {
   try {
     const { searchParams } = new URL(req.url);
-    const q = (searchParams.get("q") || "").trim().toLowerCase();
-    const cat = (searchParams.get("cat") || "").trim();
-    const limit = Math.min(parseInt(searchParams.get("limit") || "25", 10), 50);
+    const q = (searchParams.get('q') || '').trim().toLowerCase();
+    const category = (searchParams.get('category') || '').trim();
+    const order = (searchParams.get('order') || 'newest').trim();
+    const limitParam = parseInt(searchParams.get('limit') || '20', 10);
+    const limit = Math.min(Math.max(limitParam, 1), 50);
 
-    let ref = db.collection("posts").where("hidden", "==", false);
+    // Map order to a Firestore field (fallback to createdAt if the field isn't present)
+    const orderFieldMap = {
+      newest: 'createdAt',
+      liked: 'likesCount',
+      commented: 'commentsCount',
+      viewed: 'viewsCount',
+    };
+    const orderByField = orderFieldMap[order] || 'createdAt';
 
-    if (cat) {
-      if (!CATEGORY_BY_SLUG[cat]) {
-        return NextResponse.json({ ok: true, items: [], note: "invalid-category" });
-      }
-      ref = ref.where("category", "==", cat);
+    let col = adminDb.collection('posts');
+    if (category) col = col.where('category', '==', category);
+
+    let snap;
+    try {
+      snap = await col.orderBy(orderByField, 'desc').limit(limit * 2).get();
+    } catch {
+      // Fallback if ordering field doesn't exist on some docs
+      snap = await col.orderBy('createdAt', 'desc').limit(limit * 2).get();
     }
+
+    let results = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 
     if (q) {
-      // Title prefix search. Create index: (category asc, titleLower asc) when cat is used.
-      ref = ref.orderBy("titleLower").where("titleLower", ">=", q).where("titleLower", "<=", q + "\uf8ff");
-    } else {
-      ref = ref.orderBy("createdAt", "desc");
+      // Lightweight in-memory filter across common text fields
+      const fields = ['title', 'content', 'summary', 'tags'];
+      results = results.filter((item) =>
+        fields.some((f) => {
+          const v = item[f];
+          if (!v) return false;
+          if (Array.isArray(v)) return v.join(' ').toLowerCase().includes(q);
+          return String(v).toLowerCase().includes(q);
+        })
+      );
     }
 
-    const snap = await ref.limit(limit).get();
-    const items = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    // Trim to requested limit
+    results = results.slice(0, limit);
 
-    return NextResponse.json({ ok: true, items });
+    return NextResponse.json({ ok: true, count: results.length, results });
   } catch (err) {
-    console.error("GET /api/search:", err);
-    // When an index is missing, Firestore throws; surface an actionable hint (no stack).
-    return NextResponse.json({ ok: false, error: "Search failed (check Firestore indexes)." }, { status: 500 });
+    console.error('[search] error:', err);
+    return NextResponse.json(
+      { ok: false, error: 'SEARCH_FAILED' },
+      { status: 500 }
+    );
   }
 }
