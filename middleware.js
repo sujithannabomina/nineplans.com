@@ -1,56 +1,52 @@
-// middleware.ts (or middleware.js)
-import { NextResponse, type NextRequest } from "next/server";
+// middleware.js
+import { NextResponse } from "next/server";
 
+// Simple pass-through for static files, add security headers for others
 const PUBLIC_FILE = /\.(?:png|jpg|jpeg|svg|gif|webp|ico|txt|xml|js|css|map)$/i;
 
-export function middleware(req: NextRequest) {
+export function middleware(req) {
   const { pathname } = req.nextUrl;
 
-  // Skip Next internals, API routes, and obvious public files
+  // Skip static assets quickly
   if (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
+    pathname.startsWith("/_next/") ||
+    pathname.startsWith("/api/") ||
     pathname === "/favicon.ico" ||
-    pathname === "/robots.txt" ||
-    pathname === "/sitemap.xml" ||
-    pathname === "/ads.txt" ||
     PUBLIC_FILE.test(pathname)
   ) {
     return NextResponse.next();
   }
 
-  // Security headers (tune if you add new third-party hosts)
   const res = NextResponse.next();
+
+  // Basic security hardening headers
   res.headers.set("X-Frame-Options", "DENY");
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set(
     "Permissions-Policy",
-    "geolocation=(), camera=(), microphone=(), interest-cohort=()"
+    "camera=(), geolocation=(), microphone=()"
   );
-  // Allow self + Google Ads/Analytics if you use them. Adjust as needed.
+  // A conservative CSP; customize if you use 3rd-party scripts/fonts
   res.headers.set(
     "Content-Security-Policy",
     [
-      "default-src 'self' https:",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://pagead2.googlesyndication.com https://www.googletagservices.com https://googleads.g.doubleclick.net https://www.googletagmanager.com",
-      "style-src 'self' 'unsafe-inline' https:",
-      "img-src 'self' https: data: blob:",
-      "font-src 'self' https: data:",
-      "connect-src 'self' https:",
-      "media-src 'self' https: data:",
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
+      "style-src 'self' 'unsafe-inline'",
+      "img-src 'self' data: blob:",
+      "font-src 'self' data:",
+      "connect-src 'self' https://firestore.googleapis.com https://www.googleapis.com",
       "frame-ancestors 'none'",
-      "form-action 'self'",
       "base-uri 'self'",
+      "form-action 'self'",
     ].join("; ")
   );
+
   return res;
 }
 
-// ⬇️ IMPORTANT: no capturing groups here.
+// Run on all paths; avoids complex (and error-prone) regex matchers
 export const config = {
-  matcher: [
-    // Run on “everything” except Next internals and a few obvious static files.
-    "/((?!_next/static|_next/image|favicon.ico|robots.txt|sitemap.xml|ads.txt).*)",
-  ],
+  matcher: "/:path*",
 };
