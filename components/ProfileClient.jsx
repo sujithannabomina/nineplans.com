@@ -1,55 +1,67 @@
-// components/ProfileClient.jsx
 "use client";
 
-import useSWR from "swr";
 import { useSession, signIn, signOut } from "next-auth/react";
+import useSWR from "swr";
+import Link from "next/link";
 
 const fetcher = (url) =>
-  fetch(url).then((r) => (r.ok ? r.json() : Promise.reject(r)));
+  fetch(url, { credentials: "include" }).then((r) => {
+    if (!r.ok) throw new Error(`Request failed ${r.status}`);
+    return r.json();
+  });
 
 export default function ProfileClient() {
   const { data: session, status } = useSession();
 
+  // While NextAuth checks session on the client
   if (status === "loading") {
-    return <div className="p-6 text-neutral-400">Loading…</div>;
-  }
-
-  if (!session) {
     return (
-      <div className="p-6">
-        <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-6">
-          <p className="mb-3 text-neutral-300">
-            You&apos;re not signed in. Sign in to see your posts & activity.
-          </p>
-          <button
-            onClick={() => signIn("google", { callbackUrl: "/profile" })}
-            className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500"
-          >
-            Sign in with Google
-          </button>
-        </div>
+      <div className="rounded-lg border border-zinc-700 p-6 text-zinc-300">
+        Checking your session…
       </div>
     );
   }
 
+  if (!session) {
+    return (
+      <div className="rounded-lg border border-zinc-700 p-6">
+        <h2 className="mb-2 text-xl font-semibold text-zinc-100">You’re not logged in</h2>
+        <p className="mb-4 text-zinc-300">
+          Log in to view your posts, likes, comments and saved items.
+        </p>
+        <button
+          onClick={() => signIn("google", { callbackUrl: "/profile" })}
+          className="rounded-md bg-blue-600 px-4 py-2 font-medium text-white hover:bg-blue-500"
+        >
+          Continue with Google
+        </button>
+      </div>
+    );
+  }
+
+  // Fetch profile summary + interactions once we have a session
   const { data: profile } = useSWR("/api/profile", fetcher);
   const { data: interactions } = useSWR("/api/profile/interactions", fetcher);
 
   return (
-    <div className="space-y-6 p-4 md:p-6">
-      <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-5">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-lg font-semibold">
-              {profile?.name || session.user?.name || "User"}
-            </h2>
-            <p className="text-sm text-neutral-400">
-              {profile?.email || session.user?.email}
-            </p>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between rounded-lg border border-zinc-700 p-4">
+        <div>
+          <div className="text-lg font-semibold text-zinc-100">
+            {profile?.displayName || session.user?.name || "User"}
           </div>
+          <div className="text-sm text-zinc-400">{session.user?.email}</div>
+        </div>
+        <div className="space-x-2">
+          <Link
+            href="/profile/settings"
+            className="rounded-md border border-zinc-600 px-3 py-1.5 text-sm text-zinc-200 hover:bg-zinc-700"
+          >
+            Settings
+          </Link>
           <button
             onClick={() => signOut({ callbackUrl: "/" })}
-            className="rounded-lg border border-neutral-700 px-4 py-1.5 text-sm text-neutral-200 hover:bg-neutral-800"
+            className="rounded-md bg-red-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-red-500"
           >
             Sign out
           </button>
@@ -57,29 +69,28 @@ export default function ProfileClient() {
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <Card title="Your posts" items={interactions?.posted} empty="No posts yet." />
-        <Card title="Liked" items={interactions?.liked} empty="No likes yet." />
-        <Card title="Commented" items={interactions?.commented} empty="No comments yet." />
-        <Card title="Saved" items={interactions?.saved} empty="No saved posts yet." />
-        <Card title="Shared" items={interactions?.shared} empty="No shares yet." />
+        <Panel title="Your posts" items={interactions?.posts} empty="No posts yet." />
+        <Panel title="Liked" items={interactions?.liked} empty="No likes yet." />
+        <Panel title="Saved" items={interactions?.saved} empty="No saved posts yet." />
+        <Panel title="Comments" items={interactions?.comments} empty="No comments yet." />
       </div>
     </div>
   );
 }
 
-function Card({ title, items = [], empty }) {
+function Panel({ title, items, empty }) {
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-5">
-      <h3 className="mb-3 text-base font-semibold">{title}</h3>
-      {items.length === 0 ? (
-        <p className="text-sm text-neutral-400">{empty}</p>
+    <div className="rounded-lg border border-zinc-700 p-4">
+      <h3 className="mb-3 text-base font-semibold text-zinc-100">{title}</h3>
+      {!items?.length ? (
+        <div className="text-sm text-zinc-400">{empty}</div>
       ) : (
         <ul className="space-y-2">
           {items.map((it) => (
-            <li key={it.id} className="text-sm text-neutral-300">
-              <a className="underline hover:text-white" href={`/post/${it.id}`}>
-                {it.title || "Untitled"}
-              </a>
+            <li key={it.id} className="text-sm text-zinc-200">
+              <Link href={`/post/${it.id}`} className="hover:underline">
+                {it.title || it.snippet || it.id}
+              </Link>
             </li>
           ))}
         </ul>
