@@ -1,42 +1,21 @@
 /* app/globals.css */
-/* Tailwind layers */
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
 
-/* Dark theme foundation */
-:root {
-  color-scheme: dark;
-}
+/* Base */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
 
-html, body {
-  height: 100%;
-}
+/* Utility button styles used in components (Navbar, Profile, etc.) */
+.btn { border:1px solid #27272a; padding:.45rem .75rem; border-radius:.5rem; background:#0b1220; }
+.btn:hover { background:#111827; }
+.btn-primary { background:#1d4ed8; padding:.5rem .9rem; border-radius:.6rem; color:#fff; }
+.btn-primary:hover { filter:brightness(1.05); }
+.btn-danger { background:#dc2626; padding:.5rem .9rem; border-radius:.6rem; color:#fff; }
 
-body {
-  @apply bg-zinc-950 text-zinc-100 antialiased;
-}
+/* Ensure native selects can overflow their parent if needed */
+select { overflow: visible !important; }
 
-/* Simple containers & cards */
-.container {
-  @apply mx-auto max-w-6xl px-4;
-}
-
-.card {
-  @apply rounded-xl border border-zinc-800 bg-zinc-900/50;
-}
-
-.btn {
-  @apply inline-flex items-center justify-center rounded-md px-4 py-2 font-medium;
-}
-.btn-primary {
-  @apply btn bg-sky-600 text-white hover:bg-sky-500;
-}
-.btn-ghost {
-  @apply btn bg-transparent hover:bg-zinc-800/60;
-}
-
-/* Links */
-a {
-  @apply text-sky-400 hover:text-sky-300;
+/* Smooth sticky rails spacing under the header (Navbar height = 70px) */
+@media (min-width: 1024px) {
+  aside[role="complementary"],
+  aside { top: 70px; }
 }

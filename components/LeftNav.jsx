@@ -2,60 +2,52 @@
 "use client";
 
 import Link from "next/link";
-import { CATEGORIES } from "@/lib/categories";
-
-const STATIC = [
-  { href: "/", label: "Home" },
-  { href: "/top", label: "Top" },
-  { href: "/search", label: "Search" },
-  { href: "/submit", label: "Submit" },
-  { href: "/profile", label: "Profile" },
-  { href: "/community", label: "Community" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/rules", label: "Rules" },
-  { href: "/policy", label: "Policy" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
-  { href: "/trademark", label: "Trademark" },
-];
+import { useSession } from "next-auth/react";
+import { CATEGORIES, STATIC_PAGES } from "@/lib/constants";
 
 export default function LeftNav() {
-  return (
-    <aside className="sticky top-[64px] hidden h-[calc(100vh-64px)] w-56 shrink-0 overflow-y-auto border-r border-neutral-900 px-3 pb-6 pt-4 lg:block">
-      <div className="mb-4">
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">
-          Navigate
-        </h3>
-        <nav className="space-y-1">
-          {STATIC.map((s) => (
-            <Link
-              key={s.href}
-              href={s.href}
-              className="block rounded-md px-2 py-1.5 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
-            >
-              {s.label}
-            </Link>
-          ))}
-        </nav>
-      </div>
+  const { data: session } = useSession();
 
-      <div>
-        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">
-          Categories
-        </h3>
-        <nav className="space-y-1">
-          {CATEGORIES.map((c) => (
+  return (
+    <aside className="hidden lg:block w-64 shrink-0 border-r border-neutral-800 sticky top-[70px] h-[calc(100vh-70px)] overflow-y-auto p-3">
+      <div className="text-xs uppercase text-neutral-400 mb-2">Navigate</div>
+
+      {session && (
+        <div className="mb-4">
+          <Link href="/profile" className="block px-3 py-2 rounded-md border border-neutral-800 hover:bg-neutral-900">
+            Profile
+          </Link>
+        </div>
+      )}
+
+      <div className="text-xs uppercase text-neutral-400 mb-2">Categories</div>
+      <ul className="space-y-2 mb-4">
+        {CATEGORIES.map((c) => (
+          <li key={c}>
             <Link
-              key={c.slug}
-              href={`/c/${c.slug}`}
-              className="block rounded-md px-2 py-1.5 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
+              href={`/c/${encodeURIComponent(c.toLowerCase().replaceAll(" ", "-"))}`}
+              className="block px-3 py-2 rounded-md border border-neutral-800 hover:bg-neutral-900"
             >
-              {c.name}
+              {c}
             </Link>
-          ))}
-        </nav>
-      </div>
-      <div className="h-8" />
+          </li>
+        ))}
+      </ul>
+
+      <hr className="border-neutral-800 my-4" />
+
+      <ul className="space-y-2">
+        {STATIC_PAGES.map((p) => (
+          <li key={p.href}>
+            <Link
+              href={p.href}
+              className="block px-3 py-2 rounded-md border border-neutral-800 hover:bg-neutral-900"
+            >
+              {p.label}
+            </Link>
+          </li>
+        ))}
+      </ul>
     </aside>
   );
 }
