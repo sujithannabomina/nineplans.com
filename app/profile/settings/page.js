@@ -1,56 +1,42 @@
-// app/profile/settings/page.js
 "use client";
 
-import { useSession } from "next-auth/react";
-import { useState } from "react";
+import { useSession, signOut } from "next-auth/react";
 
 export default function SettingsPage() {
-  const { data: session, status } = useSession();
-  const [alias, setAlias] = useState("");
-  const [saving, setSaving] = useState(false);
-  const [msg, setMsg] = useState("");
-
-  if (status === "loading") return <div>Loading…</div>;
-  if (!session) return <div className="max-w-xl">Please sign in to change settings.</div>;
-
-  const save = async () => {
-    setSaving(true);
-    setMsg("");
-    try {
-      const res = await fetch("/api/profile", {
-        method: "PATCH",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ alias })
-      });
-      if (!res.ok) throw new Error(await res.text());
-      setMsg("Saved!");
-    } catch (e) {
-      setMsg("Error saving settings.");
-    } finally {
-      setSaving(false);
-    }
-  };
+  const { data: session } = useSession();
 
   return (
-    <div className="space-y-6 max-w-xl">
-      <div className="border border-neutral-800 rounded-xl p-4">
-        <div className="font-semibold mb-2">Posting identity</div>
-        <label className="block text-sm mb-1">Alias (optional)</label>
-        <input
-          value={alias}
-          onChange={(e) => setAlias(e.target.value)}
-          placeholder="e.g., Anonymous Owl"
-          className="w-full rounded-md border border-neutral-800 bg-neutral-950 px-3 py-2"
-        />
-        <p className="text-xs text-neutral-400 mt-2">
-          Choose an alias to post anonymously (visible instead of your name).
-        </p>
-        <div className="mt-4 flex gap-2">
-          <button className="btn-primary" onClick={save} disabled={saving}>
-            {saving ? "Saving…" : "Save"}
+    <div className="space-y-6">
+      <div className="card flex items-center justify-between">
+        <div>
+          <div className="text-xl font-semibold">
+            {session?.user?.name || "Settings"}
+          </div>
+          <div className="text-sm text-neutral-400">{session?.user?.email}</div>
+        </div>
+        <div className="flex items-center gap-2">
+          <a href="/profile" className="rounded-md bg-neutral-800 px-3 py-2 text-sm hover:bg-neutral-700">
+            Profile
+          </a>
+          <button
+            className="rounded-md bg-red-600 px-3 py-2 text-sm hover:bg-red-500"
+            onClick={() => signOut({ callbackUrl: "/" })}
+          >
+            Sign out
           </button>
         </div>
-        {msg && <div className="text-sm mt-2">{msg}</div>}
+      </div>
+
+      {/* Placeholder tiles – replace with your real settings form anytime */}
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="card">
+          <div className="mb-2 font-medium">Alias</div>
+          <div className="text-sm text-neutral-400">Use an alias to post anonymously.</div>
+        </div>
+        <div className="card">
+          <div className="mb-2 font-medium">Notifications</div>
+          <div className="text-sm text-neutral-400">Notification preferences coming soon.</div>
+        </div>
       </div>
     </div>
   );

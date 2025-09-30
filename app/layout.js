@@ -1,27 +1,41 @@
-// app/layout.js
 import "./globals.css";
-import Providers from "@/components/Providers";
 import Navbar from "@/components/Navbar";
 import LeftNav from "@/components/LeftNav";
 import RightRailAd from "@/components/RightRailAd";
+import Providers from "@/components/Providers";
 
 export const metadata = {
   title: "NinePlans",
-  description: "Write and discover posts across the community."
+  description: "Confess, review, and share ideas — anonymously if you want.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="bg-neutral-950 text-neutral-100">
+    <html lang="en">
       <body>
         <Providers>
           <Navbar />
-          <main className="mx-auto max-w-7xl px-3 sm:px-4 lg:px-6">
-            <div className="flex gap-6">
-              <LeftNav />
-              <section className="flex-1 min-w-0 py-6">{children}</section>
-              <RightRailAd />
+          <div className="tagline">
+            <div className="mx-auto max-w-6xl px-4">
+              You can write confessions anonymously, even when you're logged in.
             </div>
+          </div>
+
+          <main className="mx-auto max-w-6xl px-4 pb-12 container-3col">
+            {/* Left rail (sticky) */}
+            <aside className="left-rail hidden lg:block">
+              <LeftNav />
+            </aside>
+
+            {/* Main content */}
+            <section>
+              {children}
+            </section>
+
+            {/* Right rail (sticky) */}
+            <aside className="right-rail hidden lg:block">
+              <RightRailAd />
+            </aside>
           </main>
         </Providers>
       </body>

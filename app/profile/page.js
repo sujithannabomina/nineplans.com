@@ -1,60 +1,58 @@
-// app/profile/page.js
 "use client";
 
+import useSWR from "swr";
 import { useSession, signOut } from "next-auth/react";
-import Link from "next/link";
+
+const fetcher = (url) => fetch(url).then((r) => r.json());
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
-
-  if (status === "loading") {
-    return <div>Loading…</div>;
-  }
-  if (!session) {
-    return (
-      <div className="max-w-xl">
-        <h1 className="text-2xl font-semibold mb-4">Profile</h1>
-        <p className="mb-4">You’re not signed in.</p>
-        <Link className="btn-primary inline-block" href="/login">
-          Sign in
-        </Link>
-      </div>
-    );
-  }
-
-  const name = session.user?.name || "User";
-  const email = session.user?.email || "";
+  const { data: session } = useSession();
+  const { data } = useSWR(session ? "/api/profile" : null, fetcher);
 
   return (
     <div className="space-y-6">
-      <div className="border border-neutral-800 rounded-xl p-4 flex items-start justify-between">
+      <div className="card flex items-center justify-between">
         <div>
-          <h1 className="text-xl font-semibold">{name}</h1>
-          <p className="text-neutral-400">{email}</p>
+          <div className="text-xl font-semibold">
+            {data?.displayName || session?.user?.name || "Your profile"}
+          </div>
+          <div className="text-sm text-neutral-400">
+            {data?.email || session?.user?.email || ""}
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Link className="btn" href="/profile/settings">Settings</Link>
-          <button className="btn-danger" onClick={() => signOut({ callbackUrl: "/" })}>
-            Sign out
-          </button>
-        </div>
+        {session && (
+          <div className="flex items-center gap-2">
+            <a href="/profile/settings" className="rounded-md bg-neutral-800 px-3 py-2 text-sm hover:bg-neutral-700">
+              Settings
+            </a>
+            <button
+              className="rounded-md bg-red-600 px-3 py-2 text-sm hover:bg-red-500"
+              onClick={() => signOut({ callbackUrl: "/" })}
+            >
+              Sign out
+            </button>
+          </div>
+        )}
       </div>
 
-      <div className="grid md:grid-cols-2 gap-4">
-        <Panel title="Your posts" empty="No posts yet." />
-        <Panel title="Liked" empty="No likes yet." />
-        <Panel title="Saved" empty="No saved posts yet." />
-        <Panel title="Comments" empty="No comments yet." />
+      <div className="grid gap-4 md:grid-cols-2">
+        <div className="card">
+          <div className="mb-2 font-medium">Your posts</div>
+          <div className="text-sm text-neutral-400">No posts yet.</div>
+        </div>
+        <div className="card">
+          <div className="mb-2 font-medium">Liked</div>
+          <div className="text-sm text-neutral-400">No likes yet.</div>
+        </div>
+        <div className="card">
+          <div className="mb-2 font-medium">Saved</div>
+          <div className="text-sm text-neutral-400">No saved posts yet.</div>
+        </div>
+        <div className="card">
+          <div className="mb-2 font-medium">Comments</div>
+          <div className="text-sm text-neutral-400">No comments yet.</div>
+        </div>
       </div>
-    </div>
-  );
-}
-
-function Panel({ title, empty }) {
-  return (
-    <div className="border border-neutral-800 rounded-xl p-4">
-      <div className="font-semibold mb-2">{title}</div>
-      <div className="text-neutral-400">{empty}</div>
     </div>
   );
 }

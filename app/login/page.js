@@ -1,21 +1,25 @@
-// app/login/page.js
 "use client";
 
+import { useEffect } from "react";
 import { signIn } from "next-auth/react";
 
 export default function LoginPage() {
+  useEffect(() => {
+    // Go straight to Google
+    signIn("google", { callbackUrl: "/" });
+  }, []);
+
   return (
-    <div className="max-w-md mx-auto mt-16 p-6 border border-neutral-800 rounded-xl">
-      <h1 className="text-2xl font-semibold mb-4">Sign in</h1>
-      <p className="text-neutral-400 mb-6">
-        Use your Google account to continue.
-      </p>
-      <button
-        className="w-full btn-primary text-center"
-        onClick={() => signIn("google", { callbackUrl: "/" })}
-      >
-        Sign in with Google
-      </button>
+    <div className="mx-auto max-w-md py-16">
+      <div className="card space-y-4 text-center">
+        <p>Redirecting to Google…</p>
+        <button
+          className="rounded-md bg-blue-600 px-4 py-2 text-sm hover:bg-blue-500"
+          onClick={() => signIn("google", { callbackUrl: "/" })}
+        >
+          Try again
+        </button>
+      </div>
     </div>
   );
 }
