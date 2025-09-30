@@ -1,40 +1,61 @@
+// components/LeftNav.jsx
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { CATEGORY_LIST } from "@/lib/categories";
+import { CATEGORIES } from "@/lib/categories";
+
+const STATIC = [
+  { href: "/", label: "Home" },
+  { href: "/top", label: "Top" },
+  { href: "/search", label: "Search" },
+  { href: "/submit", label: "Submit" },
+  { href: "/profile", label: "Profile" },
+  { href: "/community", label: "Community" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/rules", label: "Rules" },
+  { href: "/policy", label: "Policy" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/trademark", label: "Trademark" },
+];
 
 export default function LeftNav() {
-  const pathname = usePathname();
-
   return (
-    // slimmer, desktop-only, scrolls; no "Navigate" (top header already has it)
-    <aside className="hidden lg:block w-56 pr-2">
-      <div className="sticky top-20 max-h-[calc(100vh-5rem)] overflow-auto leftnav-scroll">
-        <h3 className="px-2 pb-2 text-sm font-semibold text-zinc-400">
-          Categories
+    <aside className="sticky top-[64px] hidden h-[calc(100vh-64px)] w-56 shrink-0 overflow-y-auto border-r border-neutral-900 px-3 pb-6 pt-4 lg:block">
+      <div className="mb-4">
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+          Navigate
         </h3>
-        <nav className="space-y-0.5">
-          {CATEGORY_LIST.map((c) => {
-            const href = `/c/${c.slug}`;
-            const active =
-              pathname === href || pathname?.startsWith(`${href}/`);
-            return (
-              <Link
-                key={c.slug}
-                href={href}
-                className={`block rounded-md px-2 py-1.5 text-sm ${
-                  active
-                    ? "bg-zinc-800 text-sky-300"
-                    : "text-sky-400 hover:bg-zinc-800/60 hover:text-sky-200"
-                }`}
-              >
-                {c.name}
-              </Link>
-            );
-          })}
+        <nav className="space-y-1">
+          {STATIC.map((s) => (
+            <Link
+              key={s.href}
+              href={s.href}
+              className="block rounded-md px-2 py-1.5 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
+            >
+              {s.label}
+            </Link>
+          ))}
         </nav>
       </div>
+
+      <div>
+        <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-neutral-400">
+          Categories
+        </h3>
+        <nav className="space-y-1">
+          {CATEGORIES.map((c) => (
+            <Link
+              key={c.slug}
+              href={`/c/${c.slug}`}
+              className="block rounded-md px-2 py-1.5 text-sm text-neutral-300 hover:bg-neutral-900 hover:text-white"
+            >
+              {c.name}
+            </Link>
+          ))}
+        </nav>
+      </div>
+      <div className="h-8" />
     </aside>
   );
 }

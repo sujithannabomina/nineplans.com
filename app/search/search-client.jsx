@@ -1,68 +1,79 @@
-// app/search/search-client.jsx
-'use client';
+"use client";
 
-import { useEffect, useState } from 'react';
-import { useSearchParams } from 'next/navigation';
-
-const CATEGORIES = [
-  'confessions','posts','product reviews','movie reviews','place reviews',
-  'post ideas','post ads','Business info','Sports','Science','Automobile',
-  'Education','Anime','Games'
-];
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import CategorySelect from "@/components/CategorySelect";
+import PostCard from "@/components/PostCard"; // your existing card
 
 export default function SearchClient() {
-  const sp = useSearchParams();
-  const [q, setQ] = useState(sp.get('q') || '');
-  const [category, setCategory] = useState(sp.get('category') || '');
+  const params = useSearchParams();
+  const router = useRouter();
+  const [q, setQ] = useState(params.get("q") || "");
+  const [category, setCategory] = useState(params.get("cat") || "");
   const [results, setResults] = useState([]);
-
-  const runSearch = async () => {
-    const params = new URLSearchParams();
-    if (q) params.set('q', q);
-    if (category) params.set('category', category);
-    const res = await fetch(`/api/search?${params.toString()}`);
-    const json = await res.json();
-    setResults(json.data || []);
-  };
+  const [ran, setRan] = useState(false);
 
   useEffect(() => {
-    runSearch();
+    const qq = params.get("q") || "";
+    const cc = params.get("cat") || "";
+    setQ(qq);
+    setCategory(cc);
+  }, [params]);
+
+  async function doSearch(e) {
+    e?.preventDefault();
+    const searchParams = new URLSearchParams();
+    if (q) searchParams.set("q", q);
+    if (category) searchParams.set("cat", category);
+    router.replace(`/search?${searchParams.toString()}`);
+
+    const res = await fetch(`/api/search?${searchParams.toString()}`, {
+      next: { revalidate: 0 },
+    });
+    if (res.ok) {
+      setResults(await res.json());
+      setRan(true);
+    }
+  }
+
+  useEffect(() => {
+    // run on mount with current params
+    doSearch();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
-    <div className="p-6">
-      <div className="flex gap-2 mb-4">
+    <div className="space-y-4">
+      <h1 className="text-3xl font-bold">Search</h1>
+      <form onSubmit={doSearch} className="grid gap-3 md:grid-cols-[1fr,14rem,8rem]">
         <input
-          className="border rounded p-2 flex-1"
-          placeholder="Search…"
           value={q}
           onChange={(e) => setQ(e.target.value)}
+          placeholder="Search titles & text…"
+          className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none focus:ring-1 focus:ring-neutral-600"
         />
-        <select
-          className="border rounded p-2"
-          value={category}
-          onChange={(e) => setCategory(e.target.value)}
+        <CategorySelect value={category} onChange={setCategory} />
+        <button
+          className="rounded-lg bg-neutral-800 px-4 py-2 text-sm text-white hover:bg-neutral-700"
+          type="submit"
         >
-          <option value="">All categories</option>
-          {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-        </select>
-        <button className="border rounded px-3" onClick={runSearch}>Search</button>
-      </div>
+          Search
+        </button>
+      </form>
 
-      {results.length === 0 ? (
-        <p>No results.</p>
-      ) : (
-        <ul className="space-y-3">
-          {results.map((r) => (
-            <li key={r.id} className="border rounded p-3">
-              <div className="text-sm opacity-70 mb-1">{r.category}</div>
-              <div className="font-semibold">{r.title}</div>
-              <div className="text-sm line-clamp-2">{r.body}</div>
-            </li>
-          ))}
-        </ul>
-      )}
+      <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-4">
+        {results.length === 0 ? (
+          <p className="text-sm text-neutral-400">
+            {ran ? "No posts found." : "—"}
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {results.map((p) => (
+              <PostCard key={p.id} post={p} />
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

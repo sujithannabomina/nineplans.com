@@ -1,42 +1,25 @@
-// /app/c/[slug]/page.js
-import Link from "next/link";
-import { Suspense } from "react";
+// app/c/[slug]/page.js
+import LeftNav from "@/components/LeftNav";
+import RightRailAd from "@/components/RightRailAd";
 import Feed from "@/components/Feed";
+import { findCategory } from "@/lib/categories";
 
-export const dynamic = "force-dynamic"; // always render, don’t 404 on unknown slugs
-
-export async function generateMetadata({ params }) {
-  const title = `${decodeURIComponent(params.slug)
-    .replace(/-/g, " ")
-    .replace(/\b\w/g, (m) => m.toUpperCase())} • NinePlans`;
-  return { title };
-}
+export const dynamic = "force-dynamic";
 
 export default function CategoryPage({ params }) {
-  const slug = decodeURIComponent(params.slug);
+  const { slug } = params || {};
+  const cat = findCategory(slug);
 
   return (
-    <div className="space-y-6">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-xl font-semibold">
-            {slug.replace(/-/g, " ").replace(/\b\w/g, (m) => m.toUpperCase())}
-          </h1>
-          <p className="text-sm text-zinc-400">Recent posts in “{slug}”.</p>
-        </div>
-
-        {/* “Write in this category” CTA -> /submit?category=<slug> */}
-        <Link
-          href={`/submit?category=${encodeURIComponent(slug)}`}
-          className="button whitespace-nowrap"
-        >
-          Write in this category
-        </Link>
-      </header>
-
-      <Suspense fallback={<div className="text-zinc-400 px-2 py-4">Loading posts…</div>}>
+    <main className="mx-auto grid max-w-7xl grid-cols-1 gap-4 px-2 md:px-4 lg:grid-cols-[14rem,1fr] xl:grid-cols-[14rem,1fr,18rem]">
+      <LeftNav />
+      <section className="px-1 py-4">
+        <h1 className="mb-4 text-3xl font-bold">
+          {cat ? cat.name : "Category"}
+        </h1>
         <Feed category={slug} />
-      </Suspense>
-    </div>
+      </section>
+      <RightRailAd />
+    </main>
   );
 }

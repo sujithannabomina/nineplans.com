@@ -1,22 +1,21 @@
 // app/layout.jsx
 import "./globals.css";
-import Navbar from "@/components/Navbar";
 import Providers from "@/components/Providers";
+import Navbar from "@/components/Navbar";
 
 export const metadata = {
   title: "NinePlans",
   description:
-    "Write confessions and short posts anonymously. Browse by category and share your thoughts.",
-  metadataBase: new URL("https://nineplans.com"),
+    "You can write confessions anonymously, even when you're logged in.",
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en" className="bg-zinc-950 text-zinc-100">
-      <body className="min-h-screen bg-zinc-950 text-zinc-100 antialiased">
+    <html lang="en" className="bg-black">
+      <body className="min-h-screen bg-neutral-950 text-neutral-100 antialiased">
         <Providers>
           <Navbar />
-          <main className="mx-auto w-full max-w-6xl px-4 py-6">{children}</main>
+          {children}
         </Providers>
       </body>
     </html>

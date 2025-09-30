@@ -1,99 +1,102 @@
 // components/Navbar.jsx
 "use client";
 
-import Link from "next/link";
 import Image from "next/image";
+import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signIn, signOut } from "next-auth/react";
+import clsx from "clsx";
 
-const nav = [
+const links = [
   { href: "/", label: "Home" },
   { href: "/top", label: "Top" },
   { href: "/search", label: "Search" },
   { href: "/submit", label: "Submit" },
 ];
 
-function isActive(pathname, href) {
-  if (href === "/") return pathname === "/";
-  return pathname === href || pathname.startsWith(`${href}/`);
-}
-
 export default function Navbar() {
-  const pathname = usePathname();
   const { data: session } = useSession();
+  const pathname = usePathname();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-900/70 bg-zinc-950/90 backdrop-blur">
-      <div className="container flex h-14 items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          {/* Uses your logo from /public (logo.svg or logo.png). Falls back to text. */}
-          <Link href="/" className="flex items-center gap-2">
-            {/* Try svg first; if missing, Next/Image gracefully fails to load */}
+    <header className="sticky top-0 z-50 w-full border-b border-neutral-800 bg-neutral-950/80 backdrop-blur">
+      <div className="mx-auto flex max-w-7xl items-center gap-3 px-4 py-3">
+        <Link href="/" className="flex items-center gap-2">
+          {/* Put your file as /public/logo.png or /public/logo.svg */}
+          <div className="relative h-8 w-8 overflow-hidden rounded-full bg-neutral-800">
+            {/* If logo missing, this still renders a circle */}
             <Image
-              src="/logo.svg"
+              src="/logo.png"
               alt="NinePlans"
-              width={28}
-              height={28}
-              className="rounded-md"
+              fill
+              sizes="32px"
+              className="object-contain"
               onError={(e) => {
-                // If /logo.svg isn't there, swap to /logo.png
-                const img = e.currentTarget;
-                if (!img.dataset.fallback) {
-                  img.dataset.fallback = "1";
-                  img.src = "/logo.png";
-                }
+                // if no logo file, do nothing (keeps the circle)
               }}
             />
-            <span className="text-lg font-semibold tracking-tight">NinePlans</span>
-          </Link>
+          </div>
+          <span className="text-lg font-semibold">NinePlans</span>
+        </Link>
 
-          <nav className="hidden md:flex items-center gap-1">
-            {nav.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`rounded-md px-3 py-2 text-sm ${
-                  isActive(pathname, item.href)
-                    ? "bg-zinc-800 text-zinc-100"
-                    : "text-zinc-300 hover:bg-zinc-800/70 hover:text-zinc-100"
-                }`}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
+        <nav className="ml-2 hidden items-center gap-2 md:flex">
+          {links.map((l) => (
+            <Link
+              key={l.href}
+              href={l.href}
+              className={clsx(
+                "rounded-md px-3 py-1.5 text-sm",
+                pathname === l.href
+                  ? "bg-neutral-800 text-white"
+                  : "text-neutral-300 hover:bg-neutral-800 hover:text-white"
+              )}
+            >
+              {l.label}
+            </Link>
+          ))}
+        </nav>
 
-        <div className="flex items-center gap-2">
-          {session?.user ? (
+        <div className="ml-auto flex items-center gap-3">
+          {/* Tagline */}
+          <p className="hidden text-xs text-neutral-400 sm:block">
+            You can write confessions anonymously, even when you&apos;re logged in.
+          </p>
+
+          {session ? (
             <>
               <Link
                 href="/profile"
-                className="btn-ghost text-sm text-zinc-200 hover:text-white"
+                className="rounded-md bg-neutral-800 px-3 py-1.5 text-sm text-white hover:bg-neutral-700"
               >
                 Profile
               </Link>
               <button
-                className="btn-ghost text-sm text-zinc-300 hover:text-white"
                 onClick={() => signOut({ callbackUrl: "/" })}
+                className="rounded-md border border-neutral-700 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-800"
               >
                 Sign out
               </button>
-              <Link href="/submit" className="btn-primary text-sm">
+              <Link
+                href="/submit"
+                className="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500"
+              >
                 Write a post
               </Link>
             </>
           ) : (
             <>
               <button
-                className="btn-ghost text-sm text-zinc-300 hover:text-white"
-                onClick={() => signIn(undefined, { callbackUrl: "/submit" })}
+                onClick={() => signIn("google", { callbackUrl: "/submit" })}
+                className="rounded-md border border-neutral-700 px-3 py-1.5 text-sm text-neutral-200 hover:bg-neutral-800"
               >
                 Log in
               </button>
-              <Link href="/submit" className="btn-primary text-sm">
+              <button
+                onClick={() => signIn("google", { callbackUrl: "/submit" })}
+                className="rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-sky-500"
+              >
                 Write a post
-              </Link>
+              </button>
             </>
           )}
         </div>
