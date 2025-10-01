@@ -1,85 +1,66 @@
-<<<<<<< HEAD
-import Link from 'next/link';
-import { CATEGORIES, STATIC_PAGES } from './CategoryLinks';
+"use client";
 
-export default function LeftRail({ compact = false, onNavigate }) {
-  const Section = ({ title, children }) => (
-    <div className="mb-6">
-      <div className="mb-2 text-xs uppercase tracking-wide text-zinc-400">{title}</div>
-      <div className="space-y-1">
-        {children}
-      </div>
-    </div>
-  );
+import Link from "next/link";
+import { CATEGORIES, STATIC_PAGES } from "./CategoryLinks";
 
-  const Item = ({ href, children }) => (
-    <Link
-      href={href}
-      onClick={onNavigate}
-      className="block rounded px-2 py-2 text-sm text-zinc-200 hover:bg-zinc-900 hover:text-white"
-    >
-      {children}
-    </Link>
-  );
-
+export default function LeftRail() {
   return (
-    <div className={compact ? '' : 'sticky top-[calc(56px+40px)]'}>
-      <Section title="Categories">
-        {CATEGORIES.map(c => (
-          <Item key={c.slug} href={c.href}>{c.name}</Item>
-        ))}
-      </Section>
+    <nav aria-label="Sidebar" className="sticky top-20 hidden md:block">
+      <div className="space-y-6 text-sm">
+        {/* Navigate */}
+        <section>
+          <h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-400">
+            NAVIGATE
+          </h3>
+          <ul className="space-y-2">
+            <li>
+              <Link
+                href="/profile"
+                className="block rounded px-2 py-1.5 hover:bg-neutral-900"
+              >
+                Profile
+              </Link>
+            </li>
+          </ul>
+        </section>
 
-      <div className="my-4 border-t border-zinc-800" />
+        {/* Categories */}
+        <section>
+          <h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-400">
+            CATEGORIES
+          </h3>
+          <ul className="max-h-[60vh] space-y-1 overflow-y-auto pr-1">
+            {CATEGORIES.map((c) => (
+              <li key={c.slug}>
+                <Link
+                  href={`/c/${c.slug}`}
+                  className="block truncate rounded px-2 py-1.5 hover:bg-neutral-900"
+                >
+                  {c.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
 
-      <Section title="Pages">
-        {STATIC_PAGES.map(p => (
-          <Item key={p.href} href={p.href}>{p.name}</Item>
-        ))}
-      </Section>
-    </div>
+        <hr className="border-neutral-800" />
+
+        {/* Static pages */}
+        <section>
+          <ul className="space-y-1">
+            {STATIC_PAGES.map((p) => (
+              <li key={p.href}>
+                <Link
+                  href={`/${p.href}`}
+                  className="block rounded px-2 py-1.5 hover:bg-neutral-900"
+                >
+                  {p.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </section>
+      </div>
+    </nav>
   );
 }
-=======
-import Link from 'next/link';
-import { CATEGORIES, STATIC_PAGES } from './CategoryLinks';
-
-export default function LeftRail({ compact = false, onNavigate }) {
-  const Section = ({ title, children }) => (
-    <div className="mb-6">
-      <div className="mb-2 text-xs uppercase tracking-wide text-zinc-400">{title}</div>
-      <div className="space-y-1">
-        {children}
-      </div>
-    </div>
-  );
-
-  const Item = ({ href, children }) => (
-    <Link
-      href={href}
-      onClick={onNavigate}
-      className="block rounded px-2 py-2 text-sm text-zinc-200 hover:bg-zinc-900 hover:text-white"
-    >
-      {children}
-    </Link>
-  );
-
-  return (
-    <div className={compact ? '' : 'sticky top-[calc(56px+40px)]'}>
-      <Section title="Categories">
-        {CATEGORIES.map(c => (
-          <Item key={c.slug} href={c.href}>{c.name}</Item>
-        ))}
-      </Section>
-
-      <div className="my-4 border-t border-zinc-800" />
-
-      <Section title="Pages">
-        {STATIC_PAGES.map(p => (
-          <Item key={p.href} href={p.href}>{p.name}</Item>
-        ))}
-      </Section>
-    </div>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
