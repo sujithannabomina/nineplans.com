@@ -1,53 +1,60 @@
 // app/api/post/route.js
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebaseAdmin";
+import { findCategory } from "@/lib/categories";
 
-import { NextResponse } from 'next/server';
-import { adminDb, Timestamp } from '@/lib/firebaseAdmin';
+export const runtime = "nodejs";
 
-export async function POST(request) {
+export async function POST(req) {
   try {
-    const body = await request.json();
+    const body = await req.json();
+
     const {
-      title = '',
-      text = '',
-      category = 'confessions',
-      alias = 'Anonymous',
-      userId = null, // optional
+      // required
+      uid,                // client-provided current user id
+      content,            // text
+      categorySlug,       // category
+      // name model
+      mode,               // "alias" | "account"
+      alias,              // user's current alias string (if any)
+      accountName,        // user's account display name
     } = body || {};
 
-    if (!title.trim() || !text.trim()) {
-      return NextResponse.json({ ok: false, error: 'Missing title or text' }, { status: 400 });
+    if (!uid || !content || !categorySlug || !mode) {
+      return NextResponse.json({ ok: false, error: "BAD_REQUEST" }, { status: 400 });
     }
 
-    const now = Timestamp.now();
+    const cat = findCategory(categorySlug);
+    if (!cat) return NextResponse.json({ ok: false, error: "INVALID_CATEGORY" }, { status: 400 });
+
+    // Snapshot display name rules
+    const authorType = mode === "account" ? "account" : "alias";
+    const aliasSnapshot = authorType === "alias" ? String(alias || "").trim() : "";
+    const accountSnapshot = authorType === "account" ? String(accountName || "").trim() : "";
+
+    const displayName = authorType === "alias" ? (aliasSnapshot || "Alias") : (accountSnapshot || "User");
+
     const doc = {
-      title: title.trim(),
-      text: text.trim(),
-      category: category.trim().toLowerCase(),
-      alias: alias.trim() || 'Anonymous',
-      userId: userId || null,
-      createdAt: now,
-      updatedAt: now,
+      uid,
+      authorType,
+      aliasSnapshot,
+      accountSnapshot,
+      displayName,            // **always render from this field**
+      content: String(content).slice(0, 2000),
+      categorySlug: cat.slug,
+      categoryName: cat.name,
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
       likes: 0,
-      commentsCount: 0,
+      saves: 0,
       views: 0,
-      // simple keyword field to enable basic contains-any search
-      keywords: Array.from(
-        new Set(
-          (title + ' ' + text)
-            .toLowerCase()
-            .replace(/[^a-z0-9\s]+/g, ' ')
-            .split(/\s+/)
-            .filter(Boolean)
-        )
-      ),
+      status: "ok",
     };
 
-    const ref = await adminDb.collection('posts').add(doc);
+    const ref = await adminDb.collection("posts").add(doc);
     return NextResponse.json({ ok: true, id: ref.id });
   } catch (err) {
-    console.error('POST /api/post error:', err);
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+    console.error("POST /api/post", err);
+    return NextResponse.json({ ok: false, error: "POST_CREATE_FAILED" }, { status: 500 });
   }
 }

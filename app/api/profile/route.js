@@ -1,47 +1,58 @@
 // app/api/profile/route.js
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+import { NextResponse } from "next/server";
+import { adminDb } from "@/lib/firebaseAdmin";
 
-import { NextResponse } from 'next/server';
-import { adminDb } from '@/lib/firebaseAdmin';
+// Force Node runtime (Admin SDK requires it)
+export const runtime = "nodejs";
 
-export async function GET(request) {
+async function getUserId(req) {
+  // Simplified: we read an auth cookie set by NextAuth
+  // If your project already uses NextAuth, prefer requesting the userId from the client and posting it here.
+  // To avoid coupling, we also accept x-user-id in headers for now.
+  const explicit = req.headers.get("x-user-id");
+  if (explicit) return explicit;
+
+  // If you already expose the uid to the client in a secure way, keep using that.
+  return null;
+}
+
+export async function GET(req) {
   try {
-    const { searchParams } = new URL(request.url);
-    const userId = (searchParams.get('userId') || '').trim();
-    if (!userId) {
-      return NextResponse.json({ ok: false, error: 'Missing userId' }, { status: 400 });
+    const uid = await getUserId(req);
+    if (!uid) {
+      // Anonymous viewer: return minimal profile shell
+      return NextResponse.json({ ok: true, profile: { alias: "" } }, { status: 200 });
     }
 
-    const userDoc = await adminDb.collection('users').doc(userId).get();
-    const user = userDoc.exists ? userDoc.data() : null;
-
-    // Basic aggregates: counts for posts/likes/comments
-    const [postsSnap, likesSnap, commentsSnap] = await Promise.all([
-      adminDb.collection('posts').where('userId', '==', userId).limit(50).get(),
-      adminDb.collection('likes').where('userId', '==', userId).limit(50).get(),
-      adminDb.collection('comments').where('userId', '==', userId).limit(50).get(),
-    ]);
-
-    const posts = postsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const likes = likesSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-    const comments = commentsSnap.docs.map(d => ({ id: d.id, ...d.data() }));
-
-    return NextResponse.json({
-      ok: true,
-      userId,
-      user,
-      counts: {
-        posts: posts.length,
-        likes: likes.length,
-        comments: comments.length,
-      },
-      posts,
-      likes,
-      comments,
-    });
+    const ref = adminDb.collection("users").doc(uid);
+    const snap = await ref.get();
+    const data = snap.exists ? snap.data() : {};
+    return NextResponse.json({ ok: true, profile: { alias: data.alias || "" } });
   } catch (err) {
-    console.error('GET /api/profile error:', err);
-    return NextResponse.json({ ok: false, error: String(err) }, { status: 500 });
+    console.error("GET /api/profile", err);
+    return NextResponse.json({ ok: false, error: "PROFILE_READ_FAILED" }, { status: 500 });
+  }
+}
+
+export async function PATCH(req) {
+  try {
+    const uid = await getUserId(req);
+    if (!uid) return NextResponse.json({ ok: false, error: "UNAUTHENTICATED" }, { status: 401 });
+
+    const body = await req.json();
+    const newAlias = String(body.alias || "").trim().slice(0, 24); // soft limit
+
+    await adminDb.collection("users").doc(uid).set(
+      {
+        alias: newAlias,
+        updatedAt: Date.now(),
+      },
+      { merge: true }
+    );
+
+    return NextResponse.json({ ok: true, alias: newAlias });
+  } catch (err) {
+    console.error("PATCH /api/profile", err);
+    return NextResponse.json({ ok: false, error: "PROFILE_UPDATE_FAILED" }, { status: 500 });
   }
 }

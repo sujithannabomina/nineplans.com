@@ -1,25 +1,27 @@
-export const metadata = { title: "Trademark • NinePlans" };
+import LeftRail from "@/components/LeftRail";
+import RightRailAd from "@/components/RightRailAd";
+import Providers from "@/components/Providers";
 
 export default function TrademarkPage() {
   return (
-    <article className="prose prose-invert max-w-none">
-      <h1>Trademark Policy</h1>
-      <p>
-        “NinePlans”, the NinePlans logo, and related marks are trademarks or service marks of
-        NinePlans. You may not use our marks in a way that confuses users or implies endorsement.
-      </p>
-      <h2>Fair use</h2>
-      <p>
-        Descriptive or referential use of our name is allowed if it’s accurate and does not
-        suggest sponsorship.
-      </p>
-      <h2>Logos and branding</h2>
-      <p>
-        Do not modify, distort, or combine our logo with other graphics without written permission.
-      </p>
-      <p>
-        Questions? Email <a href="mailto:support@nineplans.com">support@nineplans.com</a>.
-      </p>
-    </article>
+    <Providers>
+      <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
+        <aside className="col-span-12 hidden md:col-span-3 md:block">
+          <LeftRail />
+        </aside>
+
+        <main className="col-span-12 space-y-6 md:col-span-6">
+          <h1 className="text-2xl font-bold">Trademark Policy</h1>
+          <p>
+            “NinePlans”, the NinePlans logo, and related marks are trademarks or service marks of NinePlans.
+            You may not use our marks in a way that confuses users or implies endorsement.
+          </p>
+        </main>
+
+        <aside className="col-span-12 md:col-span-3">
+          <RightRailAd />
+        </aside>
+      </div>
+    </Providers>
   );
 }

@@ -1,50 +1,43 @@
 // app/profile/page.js
-export const dynamic = "force-dynamic";
+import LeftRail from "@/components/LeftRail";
+import RightRailAd from "@/components/RightRailAd";
+import ProfileHeader from "@/components/ProfileClient";
+import Providers from "@/components/Providers";
 
 export default function ProfilePage() {
   return (
-    <div className="space-y-4">
-      <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-        <div className="mb-2 text-lg font-semibold">Universe is Not Human Centric</div>
-        <div className="text-sm text-neutral-400">0517supra@gmail.com</div>
+    <Providers>
+      <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
+        <aside className="col-span-12 hidden md:col-span-3 md:block">
+          <LeftRail />
+        </aside>
 
-        <div className="mt-3 flex gap-2">
-          <a
-            href="/profile/settings"
-            className="rounded-md border border-neutral-700 px-3 py-1.5 hover:bg-neutral-800"
-          >
-            Settings
-          </a>
-          <a
-            href="/api/auth/signout?callbackUrl=%2F"
-            className="rounded-md bg-rose-600 px-3 py-1.5 text-white hover:bg-rose-500"
-          >
-            Sign out
-          </a>
-        </div>
-      </section>
+        <main className="col-span-12 space-y-6 md:col-span-6">
+          <ProfileHeader />
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+              <h3 className="mb-2 font-semibold">Your posts</h3>
+              <p className="text-sm text-neutral-400">No posts yet.</p>
+            </div>
+            <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+              <h3 className="mb-2 font-semibold">Liked</h3>
+              <p className="text-sm text-neutral-400">No likes yet.</p>
+            </div>
+            <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+              <h3 className="mb-2 font-semibold">Saved</h3>
+              <p className="text-sm text-neutral-400">No saved posts yet.</p>
+            </div>
+            <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+              <h3 className="mb-2 font-semibold">Comments</h3>
+              <p className="text-sm text-neutral-400">No comments yet.</p>
+            </div>
+          </div>
+        </main>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-          <div className="mb-2 font-semibold">Your posts</div>
-          <div className="text-sm text-neutral-400">No posts yet.</div>
-        </section>
-
-        <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-          <div className="mb-2 font-semibold">Liked</div>
-          <div className="text-sm text-neutral-400">No likes yet.</div>
-        </section>
-
-        <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-          <div className="mb-2 font-semibold">Saved</div>
-          <div className="text-sm text-neutral-400">No saved posts yet.</div>
-        </section>
-
-        <section className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-          <div className="mb-2 font-semibold">Comments</div>
-          <div className="text-sm text-neutral-400">No comments yet.</div>
-        </section>
+        <aside className="col-span-12 md:col-span-3">
+          <RightRailAd />
+        </aside>
       </div>
-    </div>
+    </Providers>
   );
 }

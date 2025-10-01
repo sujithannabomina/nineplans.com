@@ -1,14 +1,27 @@
-// app/community/page.jsx
-export const metadata = { title: "Community • NinePlans" };
+import LeftRail from "@/components/LeftRail";
+import RightRailAd from "@/components/RightRailAd";
+import Providers from "@/components/Providers";
 
 export default function CommunityPage() {
   return (
-    <div className="space-y-4">
-      <h1 className="text-3xl font-bold">Community</h1>
-      <p className="text-zinc-300">
-        Welcome! Community tools (groups, reputation, and events) are on the
-        roadmap. For now, jump in by writing posts, commenting, and upvoting.
-      </p>
-    </div>
+    <Providers>
+      <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
+        <aside className="col-span-12 hidden md:col-span-3 md:block">
+          <LeftRail />
+        </aside>
+
+        <main className="col-span-12 space-y-6 md:col-span-6">
+          <h1 className="text-2xl font-bold">Community</h1>
+          <p className="text-neutral-300">
+            Welcome! Community tools (groups, reputation, and events) are on the roadmap. For now,
+            jump in by writing posts, commenting, and upvoting.
+          </p>
+        </main>
+
+        <aside className="col-span-12 md:col-span-3">
+          <RightRailAd />
+        </aside>
+      </div>
+    </Providers>
   );
 }

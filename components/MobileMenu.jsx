@@ -1,130 +1,84 @@
-// components/MobileMenu.jsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { signIn, signOut, useSession } from 'next-auth/react';
-
-const categories = [
-  'Confessions','Posts','Product Reviews','Movie Reviews','Place Reviews','Post Ideas','Post Ads','Business Info',
-  'Sports','Science','Automobile','Education','Anime','Technology','Travel','Food','Health','Finance','Fashion',
-  'Books','Music','Gaming','Photography','Art','History','Relationships','Career','Pets','Gardening','DIY',
-  'Parenting','Fitness'
-];
-
-const staticPages = [
-  { href: '/community', label: 'Community' },
-  { href: '/faq', label: 'FAQ' },
-  { href: '/rules', label: 'Rules' },
-  { href: '/policy', label: 'Policy' },
-  { href: '/privacy', label: 'Privacy' },
-  { href: '/terms', label: 'Terms' },
-  { href: '/trademark', label: 'Trademark' },
-];
+import Link from "next/link";
 
 export default function MobileMenu({ open, onClose }) {
-  const { data: session } = useSession();
-
   return (
     <div
-      className={`fixed inset-0 z-50 lg:hidden ${open ? '' : 'pointer-events-none'}`}
+      className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`}
       aria-hidden={!open}
     >
       {/* Backdrop */}
       <div
-        className={`absolute inset-0 bg-black/50 transition-opacity ${open ? 'opacity-100' : 'opacity-0'}`}
+        className={`absolute inset-0 bg-black/60 transition-opacity ${open ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
       />
-
       {/* Panel */}
       <div
-        className={`absolute left-0 top-0 h-full w-[88%] max-w-sm bg-neutral-950 p-4 shadow-xl transition-transform
-        ${open ? 'translate-x-0' : '-translate-x-full'}`}
+        className={`absolute left-0 top-0 h-full w-[82%] max-w-sm bg-black border-r border-zinc-800 p-4 overflow-y-auto transition-transform ${
+          open ? "translate-x-0" : "-translate-x-full"
+        }`}
+        role="dialog"
+        aria-modal="true"
       >
         <div className="mb-3 flex items-center justify-between">
-          <span className="font-semibold">Menu</span>
+          <span className="font-semibold">NinePlans</span>
           <button
-            aria-label="Close menu"
-            className="rounded-md p-2 hover:bg-neutral-800"
             onClick={onClose}
+            className="h-8 w-8 rounded-md border border-zinc-800"
+            aria-label="Close"
           >
             ✕
           </button>
         </div>
 
-        {/* Quick links */}
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          <Link href="/" onClick={onClose} className="rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-center hover:bg-neutral-800">Home</Link>
-          <Link href="/top" onClick={onClose} className="rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-center hover:bg-neutral-800">Top</Link>
-          <Link href="/search" onClick={onClose} className="rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-center hover:bg-neutral-800">Search</Link>
-          <Link href="/submit" onClick={onClose} className="rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-center hover:bg-neutral-800">Submit</Link>
+        {/* Top actions */}
+        <div className="grid grid-cols-2 gap-3 text-sm">
+          <Link className="rounded-md border border-zinc-800 p-2" href="/">Home</Link>
+          <Link className="rounded-md border border-zinc-800 p-2" href="/top">Top</Link>
+          <Link className="rounded-md border border-zinc-800 p-2" href="/search">Search</Link>
+          <Link className="rounded-md border border-zinc-800 p-2" href="/submit">Submit</Link>
         </div>
 
-        {/* Auth action */}
-        <div className="mt-3">
-          {session ? (
-            <div className="flex gap-2">
-              <Link
-                href="/profile"
-                onClick={onClose}
-                className="flex-1 rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-center text-sm hover:bg-neutral-800"
-              >
-                Profile
+        <div className="my-4 h-px bg-zinc-800" />
+
+        <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          <Link href="/profile" className="text-zinc-300">Profile</Link>
+          <Link href="/faq" className="text-zinc-300">FAQ</Link>
+          <Link href="/community" className="text-zinc-300">Community</Link>
+          <Link href="/policy" className="text-zinc-300">Policy</Link>
+          <Link href="/privacy" className="text-zinc-300">Privacy</Link>
+          <Link href="/rules" className="text-zinc-300">Rules</Link>
+          <Link href="/terms" className="text-zinc-300">Terms</Link>
+          <Link href="/trademark" className="text-zinc-300">Trademark</Link>
+        </div>
+
+        <div className="mt-6">
+          <Link
+            href="/login"
+            className="inline-flex w-full items-center justify-center rounded-md bg-blue-600 px-3 py-2 text-sm font-medium text-white hover:bg-blue-500"
+          >
+            Sign in with Google
+          </Link>
+        </div>
+
+        {/* Categories list (scrolls inside panel, doesn’t push content) */}
+        <div className="mt-6">
+          <p className="mb-2 text-xs font-semibold text-zinc-400">CATEGORIES</p>
+          <div className="space-y-2 text-sm">
+            {/* Keep links light to avoid huge menu length feeling on mobile */}
+            {[
+              "confessions","posts","product-reviews","movie-reviews","place-reviews","post-ideas","post-ads",
+              "business-info","sports","science","automobile","education","anime","technology","travel","food",
+              "health","finance","fashion","books","music","gaming","photography","art","history","relationships",
+              "career","pets","gardening","diy","parenting","fitness"
+            ].map((slug) => (
+              <Link key={slug} href={`/c/${slug}`} onClick={onClose} className="block text-zinc-300">
+                {slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
               </Link>
-              <button
-                onClick={() => { signOut(); onClose(); }}
-                className="flex-1 rounded-md bg-red-600 px-3 py-2 text-sm hover:bg-red-500"
-              >
-                Sign out
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={() => { signIn('google'); onClose(); }}
-              className="w-full rounded-md bg-sky-600 px-3 py-2 text-sm font-medium hover:bg-sky-500"
-            >
-              Sign in with Google
-            </button>
-          )}
+            ))}
+          </div>
         </div>
-
-        <hr className="my-4 border-neutral-800" />
-
-        {/* Static pages (two-column compact) */}
-        <div className="grid grid-cols-2 gap-2 text-sm">
-          {staticPages.map(p => (
-            <Link key={p.href} href={p.href} onClick={onClose} className="rounded-md px-2 py-1.5 hover:bg-neutral-900">
-              {p.label}
-            </Link>
-          ))}
-        </div>
-
-        <hr className="my-4 border-neutral-800" />
-
-        {/* Categories (collapsible so content isn't pushed down) */}
-        <details className="group">
-          <summary className="cursor-pointer list-none rounded-md bg-neutral-900 px-3 py-2 text-sm hover:bg-neutral-800">
-            Categories
-            <span className="float-right text-neutral-400 group-open:rotate-180 transition-transform">▾</span>
-          </summary>
-          <nav className="mt-2 max-h-[45vh] overflow-y-auto pr-2">
-            <ul className="space-y-1 text-sm">
-              {categories.map((label) => {
-                const slug = label.toLowerCase().replace(/\s+/g, '-');
-                return (
-                  <li key={slug}>
-                    <Link
-                      href={`/c/${slug}`}
-                      onClick={onClose}
-                      className="block rounded-md px-3 py-2 hover:bg-neutral-900"
-                    >
-                      {label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </details>
       </div>
     </div>
   );

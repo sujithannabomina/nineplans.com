@@ -1,36 +1,48 @@
-export const metadata = { title: "Community Rules • NinePlans" };
-
-const Card = ({ title, children }) => (
-  <div className="rounded-lg border border-white/10 bg-black/30 p-4">
-    <h2 className="text-lg font-semibold">{title}</h2>
-    <div className="mt-2 text-zinc-300">{children}</div>
-  </div>
-);
+import LeftRail from "@/components/LeftRail";
+import RightRailAd from "@/components/RightRailAd";
+import Providers from "@/components/Providers";
 
 export default function RulesPage() {
   return (
-    <div className="space-y-6">
-      <h1 className="text-3xl font-bold">Community Rules</h1>
+    <Providers>
+      <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
+        <aside className="col-span-12 hidden md:col-span-3 md:block">
+          <LeftRail />
+        </aside>
 
-      <Card title="Be respectful">
-        No harassment, hate speech, or personal attacks. Debate ideas, not people.
-      </Card>
+        <main className="col-span-12 space-y-6 md:col-span-6">
+          <h1 className="text-2xl font-bold">Community Rules</h1>
 
-      <Card title="No illegal or dangerous content">
-        Don’t post or request illegal content or instructions to cause harm.
-      </Card>
+          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+            <h3 className="mb-1 font-semibold">Be respectful</h3>
+            <p>No harassment, hate speech, or personal attacks. Debate ideas, not people.</p>
+          </div>
 
-      <Card title="Protect privacy">
-        No doxxing or sharing personal information without consent.
-      </Card>
+          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+            <h3 className="mb-1 font-semibold">No illegal or dangerous content</h3>
+            <p>Don’t post or request illegal content or instructions to cause harm.</p>
+          </div>
 
-      <Card title="No spam or scams">
-        Self-promotion must add value and follow disclosure laws. No link spam.
-      </Card>
+          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+            <h3 className="mb-1 font-semibold">Protect privacy</h3>
+            <p>No doxxing or sharing personal information without consent.</p>
+          </div>
 
-      <Card title="Vote & report responsibly">
-        Upvote quality, downvote off-topic, and use report for rule violations.
-      </Card>
-    </div>
+          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+            <h3 className="mb-1 font-semibold">No spam or scams</h3>
+            <p>Self-promotion must add value and follow disclosure laws. No link spam.</p>
+          </div>
+
+          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+            <h3 className="mb-1 font-semibold">Vote & report responsibly</h3>
+            <p>Upvote quality, downvote off-topic, and use report for rule violations.</p>
+          </div>
+        </main>
+
+        <aside className="col-span-12 md:col-span-3">
+          <RightRailAd />
+        </aside>
+      </div>
+    </Providers>
   );
 }

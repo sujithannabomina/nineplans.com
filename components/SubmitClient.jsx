@@ -1,99 +1,98 @@
 // components/SubmitClient.jsx
 "use client";
 
-import { useState } from "react";
-import { useSession, signIn } from "next-auth/react";
+import { useState, useMemo } from "react";
 import CategorySelect from "./CategorySelect";
 
-export default function SubmitClient() {
-  const { data: session } = useSession();
+export default function SubmitClient({ session, profile }) {
+  // session: { uid, name } provided by server/page
+  // profile: { alias }
   const [category, setCategory] = useState("confessions");
-  const [alias, setAlias] = useState("");
-  const [title, setTitle] = useState("");
-  const [text, setText] = useState("");
+  const [content, setContent] = useState("");
+  const [mode, setMode] = useState(profile?.alias ? "alias" : "account");
+  const [busy, setBusy] = useState(false);
+  const canPost = content.trim().length > 0 && !busy;
 
-  if (!session) {
-    return (
-      <div className="rounded-xl border border-neutral-800 bg-neutral-950 p-6">
-        <p className="mb-3 text-neutral-300">
-          Sign in to post. You can still publish anonymously by choosing an alias.
-        </p>
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/submit" })}
-          className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500"
-        >
-          Sign in with Google
-        </button>
-      </div>
-    );
-  }
+  const labelAlias = useMemo(() => {
+    return profile?.alias ? `Alias (${profile.alias})` : "Alias (set in Profile → Settings)";
+  }, [profile?.alias]);
 
-  async function onSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
-    const res = await fetch("/api/post", {
-      method: "POST",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify({ category, alias, title, text }),
-    });
-    if (res.ok) {
-      setTitle("");
-      setText("");
+    if (!canPost) return;
+
+    setBusy(true);
+    try {
+      const res = await fetch("/api/post", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-user-id": session?.uid || "",
+        },
+        body: JSON.stringify({
+          uid: session?.uid,
+          content,
+          categorySlug: category,
+          mode,
+          alias: profile?.alias || "",
+          accountName: session?.name || "",
+        }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.error || "Post failed");
+      setContent("");
       alert("Posted!");
-    } else {
-      alert("Failed to post.");
+    } catch (err) {
+      console.error(err);
+      alert("Sorry, post failed. Try again.");
+    } finally {
+      setBusy(false);
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4 rounded-xl border border-neutral-800 bg-neutral-950 p-5">
-      <div className="grid gap-4 md:grid-cols-2">
+    <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Post as */}
+      <div className="grid gap-2 md:grid-cols-2">
         <div>
-          <label className="mb-1 block text-sm text-neutral-400">Post as</label>
+          <label className="mb-1 block text-sm text-neutral-300">Post as</label>
           <select
-            value={alias}
-            onChange={(e) => setAlias(e.target.value)}
-            className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none focus:ring-1 focus:ring-neutral-600"
+            value={mode}
+            onChange={(e) => setMode(e.target.value)}
+            className="w-full rounded border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm"
           >
-            <option value="">Alias</option>
-            <option value="anonymous">Anonymous</option>
+            <option value="alias">{labelAlias}</option>
+            <option value="account">{`Account name (${session?.name || "User"})`}</option>
           </select>
+          {mode === "alias" && !profile?.alias && (
+            <p className="mt-1 text-xs text-amber-400">Tip: Set your alias in Profile → Settings.</p>
+          )}
         </div>
 
         <div>
-          <label className="mb-1 block text-sm text-neutral-400">Category</label>
-          <div className="max-h-64 overflow-y-auto">
-            <CategorySelect value={category} onChange={setCategory} allOption={false} />
-          </div>
+          <label className="mb-1 block text-sm text-neutral-300">Category</label>
+          <CategorySelect value={category} onChange={setCategory} />
         </div>
       </div>
 
+      {/* Content */}
       <div>
-        <label className="mb-1 block text-sm text-neutral-400">Title</label>
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          maxLength={140}
-          placeholder="Keep it concise (max 140 chars)"
-          className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none focus:ring-1 focus:ring-neutral-600"
-        />
-      </div>
-
-      <div>
-        <label className="mb-1 block text-sm text-neutral-400">Your post</label>
+        <label className="mb-1 block text-sm text-neutral-300">Your post</label>
         <textarea
-          value={text}
-          onChange={(e) => setText(e.target.value)}
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
           rows={6}
           placeholder="Write your post. Links allowed. No images/videos in comments."
-          className="w-full rounded-lg border border-neutral-800 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 outline-none focus:ring-1 focus:ring-neutral-600"
+          className="w-full rounded border border-neutral-700 bg-neutral-900 p-3 text-sm"
         />
       </div>
 
       <button
         type="submit"
-        className="rounded-lg bg-sky-600 px-4 py-2 text-sm font-medium text-white hover:bg-sky-500"
+        disabled={!canPost}
+        className="rounded bg-blue-600 px-4 py-2 text-white disabled:opacity-50"
       >
-        Post
+        {busy ? "Posting..." : "Post"}
       </button>
     </form>
   );

@@ -2,7 +2,7 @@ import LeftRail from "@/components/LeftRail";
 import RightRailAd from "@/components/RightRailAd";
 import Providers from "@/components/Providers";
 
-export default function PolicyPage() {
+export default function MostViewedPage() {
   return (
     <Providers>
       <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
@@ -11,13 +11,10 @@ export default function PolicyPage() {
         </aside>
 
         <main className="col-span-12 space-y-6 md:col-span-6">
-          <h1 className="text-2xl font-bold">Content & Advertising Policy</h1>
-          <ul className="list-disc space-y-2 pl-5 text-neutral-300">
-            <li>No hate speech, harassment, doxxing, or illegal content.</li>
-            <li>Keep reviews and opinions honest; disclose material connections.</li>
-            <li>Ads and self-promotion must follow local laws and be clearly labeled.</li>
-            <li>Repeated or severe violations may result in account restrictions or removal of content.</li>
-          </ul>
+          <h1 className="text-2xl font-bold">Most Viewed</h1>
+          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
+            <p className="text-sm text-neutral-400">No posts yet. Be the first to write one.</p>
+          </div>
         </main>
 
         <aside className="col-span-12 md:col-span-3">

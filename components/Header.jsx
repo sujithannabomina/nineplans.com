@@ -1,88 +1,38 @@
 // components/Header.jsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import Image from 'next/image';
-import { useState } from 'react';
-import { signIn, signOut, useSession } from 'next-auth/react';
-import MobileMenu from './MobileMenu';
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 export default function Header() {
-  const { data: session } = useSession();
-  const [open, setOpen] = useState(false);
+  const pathname = usePathname();
+  const isActive = (p) => pathname === p;
 
   return (
-    <header className="sticky top-0 z-40 w-full border-b border-neutral-800 bg-neutral-950/80 backdrop-blur">
-      <div className="mx-auto flex h-14 items-center justify-between gap-3 px-4 md:px-6 lg:px-8 max-w-7xl">
-        {/* Left: Hamburger (mobile) + Logo */}
-        <div className="flex items-center gap-2">
-          <button
-            aria-label="Open menu"
-            className="inline-flex items-center justify-center rounded-md p-2 hover:bg-neutral-800 focus:outline-none focus:ring-2 focus:ring-neutral-700 lg:hidden"
-            onClick={() => setOpen(true)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
-              <path d="M3 6h18M3 12h18M3 18h18" stroke="currentColor" strokeWidth="2" />
-            </svg>
-          </button>
+    <header className="sticky top-0 z-40 border-b border-neutral-800 bg-black/70 backdrop-blur">
+      <div className="mx-auto max-w-6xl px-4">
+        <div className="flex h-14 items-center justify-between">
+          {/* Brand */}
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2">
+              <span className="inline-block h-6 w-6 rounded-full border border-sky-400" />
+              <span className="font-semibold">NinePlans</span>
+            </Link>
+            <span className="hidden text-xs text-neutral-400 md:inline">
+              You can write confessions anonymously, even when you&apos;re logged in.
+            </span>
+          </div>
 
-          <Link href="/" className="flex items-center gap-2">
-            <Image
-              src="/logo.png"
-              alt="NinePlans"
-              width={28}
-              height={28}
-              className="rounded-full ring-1 ring-neutral-700"
-              priority
-            />
-            <span className="font-semibold tracking-wide">NinePlans</span>
-          </Link>
-        </div>
-
-        {/* Center: desktop nav */}
-        <nav className="hidden md:flex items-center gap-4 text-sm">
-          <Link href="/" className="hover:text-white text-neutral-300">Home</Link>
-          <Link href="/top" className="hover:text-white text-neutral-300">Top</Link>
-          <Link href="/search" className="hover:text-white text-neutral-300">Search</Link>
-          <Link href="/submit" className="hover:text-white text-neutral-300">Submit</Link>
-        </nav>
-
-        {/* Right: auth + write */}
-        <div className="flex items-center gap-2">
-          {session ? (
-            <>
-              <Link
-                href="/profile"
-                className="hidden sm:inline-flex rounded-md border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-sm hover:bg-neutral-800"
-              >
-                Profile
-              </Link>
-              <button
-                onClick={() => signOut()}
-                className="hidden sm:inline-flex rounded-md bg-red-600 px-3 py-1.5 text-sm hover:bg-red-500"
-              >
-                Sign out
-              </button>
-            </>
-          ) : (
-            <button
-              onClick={() => signIn('google')}
-              className="hidden sm:inline-flex rounded-md border border-neutral-800 bg-neutral-900 px-3 py-1.5 text-sm hover:bg-neutral-800"
-            >
-              Log in
-            </button>
-          )}
-          <Link
-            href="/submit"
-            className="inline-flex rounded-md bg-sky-600 px-3 py-1.5 text-sm font-medium hover:bg-sky-500"
-          >
-            Write a post
-          </Link>
+          {/* Primary nav */}
+          <nav className="flex items-center gap-6 text-sm">
+            <Link className={isActive("/") ? "text-white" : "text-neutral-300 hover:text-white"} href="/">Home</Link>
+            <Link className={isActive("/top") ? "text-white" : "text-neutral-300 hover:text-white"} href="/top">Top</Link>
+            <Link className={isActive("/search") ? "text-white" : "text-neutral-300 hover:text-white"} href="/search">Search</Link>
+            <Link className={isActive("/submit") ? "text-white" : "text-neutral-300 hover:text-white"} href="/submit">Submit</Link>
+            <Link href="/login" className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-500">Write a post</Link>
+          </nav>
         </div>
       </div>
-
-      {/* Mobile drawer */}
-      <MobileMenu open={open} onClose={() => setOpen(false)} />
     </header>
   );
 }
