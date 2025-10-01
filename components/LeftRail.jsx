@@ -1,66 +1,49 @@
-"use client";
-
-import Link from "next/link";
-import { CATEGORIES, STATIC_PAGES } from "./CategoryLinks";
+// components/LeftRail.jsx
+import Link from 'next/link';
+import { CATEGORIES, STATIC_PAGES } from './CategoryLinks';
 
 export default function LeftRail() {
   return (
-    <nav aria-label="Sidebar" className="sticky top-20 hidden md:block">
-      <div className="space-y-6 text-sm">
-        {/* Navigate */}
-        <section>
-          <h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-400">
-            NAVIGATE
-          </h3>
+    <aside className="sticky top-20 hidden lg:block col-span-3">
+      <nav className="space-y-8 text-sm">
+        <div>
+          <p className="mb-3 text-xs font-semibold text-zinc-400">NAVIGATE</p>
           <ul className="space-y-2">
             <li>
-              <Link
-                href="/profile"
-                className="block rounded px-2 py-1.5 hover:bg-neutral-900"
-              >
+              <Link href="/profile" className="hover:underline">
                 Profile
               </Link>
             </li>
           </ul>
-        </section>
+        </div>
 
-        {/* Categories */}
-        <section>
-          <h3 className="mb-2 text-xs font-semibold tracking-wide text-neutral-400">
-            CATEGORIES
-          </h3>
-          <ul className="max-h-[60vh] space-y-1 overflow-y-auto pr-1">
-            {CATEGORIES.map((c) => (
-              <li key={c.slug}>
-                <Link
-                  href={`/c/${c.slug}`}
-                  className="block truncate rounded px-2 py-1.5 hover:bg-neutral-900"
-                >
-                  {c.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </section>
+        <div>
+          <p className="mb-3 text-xs font-semibold text-zinc-400">CATEGORIES</p>
+          <div className="max-h-[60vh] overflow-y-auto pr-2">
+            <ul className="space-y-2">
+              {CATEGORIES.map((c) => (
+                <li key={c.slug}>
+                  <Link href={`/c/${c.slug}`} className="hover:underline">
+                    {c.name}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
 
-        <hr className="border-neutral-800" />
-
-        {/* Static pages */}
-        <section>
-          <ul className="space-y-1">
+        <div className="border-t border-zinc-800 pt-6">
+          <ul className="space-y-2">
             {STATIC_PAGES.map((p) => (
               <li key={p.href}>
-                <Link
-                  href={`/${p.href}`}
-                  className="block rounded px-2 py-1.5 hover:bg-neutral-900"
-                >
+                <Link href={p.href} className="hover:underline">
                   {p.label}
                 </Link>
               </li>
             ))}
           </ul>
-        </section>
-      </div>
-    </nav>
+        </div>
+      </nav>
+    </aside>
   );
 }

@@ -1,29 +1,23 @@
-import LeftRail from "@/components/LeftRail";
-import RightRailAd from "@/components/RightRailAd";
-import Providers from "@/components/Providers";
+// app/policy/page.jsx
+import LeftRail from '@/components/LeftRail';
+import RightRailAd from '@/components/RightRailAd';
+
+export const metadata = { title: 'Content & Advertising Policy • NinePlans' };
 
 export default function PolicyPage() {
   return (
-    <Providers>
-      <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
-        <aside className="col-span-12 hidden md:col-span-3 md:block">
-          <LeftRail />
-        </aside>
-
-        <main className="col-span-12 space-y-6 md:col-span-6">
-          <h1 className="text-2xl font-bold">Content & Advertising Policy</h1>
-          <ul className="list-disc space-y-2 pl-5 text-neutral-300">
-            <li>No hate speech, harassment, doxxing, or illegal content.</li>
-            <li>Keep reviews and opinions honest; disclose material connections.</li>
-            <li>Ads and self-promotion must follow local laws and be clearly labeled.</li>
-            <li>Repeated or severe violations may result in account restrictions or removal of content.</li>
-          </ul>
-        </main>
-
-        <aside className="col-span-12 md:col-span-3">
-          <RightRailAd />
-        </aside>
-      </div>
-    </Providers>
+    <div className="mx-auto max-w-6xl px-4 py-6 grid grid-cols-12 gap-6">
+      <LeftRail />
+      <main className="col-span-12 lg:col-span-9 xl:col-span-6 space-y-6">
+        <h1 className="text-2xl font-semibold">Content & Advertising Policy</h1>
+        <ul className="list-disc pl-5 space-y-2 text-zinc-300">
+          <li>No hate speech, harassment, doxxing, or illegal content.</li>
+          <li>Keep reviews and opinions honest; disclose material connections.</li>
+          <li>Ads and self-promotion must follow local laws and be clearly labeled.</li>
+          <li>Repeated or severe violations may result in account restrictions or removal of content.</li>
+        </ul>
+      </main>
+      <RightRailAd />
+    </div>
   );
 }

@@ -1,34 +1,52 @@
-import LeftRail from "@/components/LeftRail";
-import RightRailAd from "@/components/RightRailAd";
-import Providers from "@/components/Providers";
+// app/top/page.jsx
+import Link from 'next/link';
+import LeftRail from '@/components/LeftRail';
+import RightRailAd from '@/components/RightRailAd';
 
-export default function TopIndexPage() {
+export const metadata = { title: 'Top • NinePlans' };
+
+export default function TopPage() {
   return (
-    <Providers>
-      <div className="mx-auto grid max-w-6xl grid-cols-12 gap-6 px-4 py-6">
-        <aside className="col-span-12 hidden md:col-span-3 md:block">
-          <LeftRail />
-        </aside>
+    <div className="mx-auto max-w-6xl px-4 py-6 grid grid-cols-12 gap-6">
+      <LeftRail />
 
-        <main className="col-span-12 space-y-6 md:col-span-6">
-          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
-            <h2 className="text-lg font-semibold">Most Viewed</h2>
-            <p className="text-sm text-neutral-400">What everyone’s reading</p>
-          </div>
-          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
-            <h2 className="text-lg font-semibold">Most Liked</h2>
-            <p className="text-sm text-neutral-400">Community favorites</p>
-          </div>
-          <div className="rounded border border-neutral-800 bg-neutral-950 p-4">
-            <h2 className="text-lg font-semibold">Most Commented</h2>
-            <p className="text-sm text-neutral-400">Biggest discussions</p>
-          </div>
-        </main>
+      <main className="col-span-12 lg:col-span-9 xl:col-span-6 space-y-6">
+        <div className="grid md:grid-cols-2 gap-6">
+          <Link
+            href="/top/viewed"
+            className="rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4 hover:border-zinc-700"
+          >
+            <h2 className="text-lg font-semibold mb-1">Most Viewed</h2>
+            <p className="text-sm text-zinc-400">What everyone’s reading</p>
+          </Link>
 
-        <aside className="col-span-12 md:col-span-3">
-          <RightRailAd />
-        </aside>
-      </div>
-    </Providers>
+          <Link
+            href="/top/liked"
+            className="rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4 hover:border-zinc-700"
+          >
+            <h2 className="text-lg font-semibold mb-1">Most Liked</h2>
+            <p className="text-sm text-zinc-400">Community favorites</p>
+          </Link>
+        </div>
+
+        <Link
+          href="/top/commented"
+          className="block rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4 hover:border-zinc-700"
+        >
+          <h2 className="text-lg font-semibold mb-1">Most Commented</h2>
+          <p className="text-sm text-zinc-400">Biggest discussions</p>
+        </Link>
+
+        <Link
+          href="/top/saved"
+          className="block rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4 hover:border-zinc-700"
+        >
+          <h2 className="text-lg font-semibold mb-1">Most Saved</h2>
+          <p className="text-sm text-zinc-400">Bookmarked the most</p>
+        </Link>
+      </main>
+
+      <RightRailAd />
+    </div>
   );
 }

@@ -1,36 +1,60 @@
 // components/Header.jsx
-"use client";
+'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import ProfileLink from './ProfileLink';
+
+const nav = [
+  { href: '/', label: 'Home' },
+  { href: '/top', label: 'Top' },
+  { href: '/search', label: 'Search' },
+  { href: '/submit', label: 'Submit' },
+];
+
+const TAGLINE = 'You can write confessions anonymously, even when you’re logged in.';
 
 export default function Header() {
   const pathname = usePathname();
-  const isActive = (p) => pathname === p;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-neutral-800 bg-black/70 backdrop-blur">
+    <header className="sticky top-0 z-40 border-b border-zinc-900/70 bg-black/70 backdrop-blur">
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex h-14 items-center justify-between">
-          {/* Brand */}
           <div className="flex items-center gap-3">
             <Link href="/" className="flex items-center gap-2">
-              <span className="inline-block h-6 w-6 rounded-full border border-sky-400" />
-              <span className="font-semibold">NinePlans</span>
+              <div className="h-6 w-6 rounded-full border border-zinc-600 ring-1 ring-cyan-400/40" />
+              <span className="font-semibold tracking-wide">NinePlans</span>
             </Link>
-            <span className="hidden text-xs text-neutral-400 md:inline">
-              You can write confessions anonymously, even when you&apos;re logged in.
-            </span>
+            <nav className="hidden md:flex items-center gap-6 ml-4 text-sm">
+              {nav.map((n) => (
+                <Link
+                  key={n.href}
+                  href={n.href}
+                  className={`hover:text-white ${
+                    pathname === n.href ? 'text-white' : 'text-zinc-400'
+                  }`}
+                >
+                  {n.label}
+                </Link>
+              ))}
+            </nav>
           </div>
 
-          {/* Primary nav */}
-          <nav className="flex items-center gap-6 text-sm">
-            <Link className={isActive("/") ? "text-white" : "text-neutral-300 hover:text-white"} href="/">Home</Link>
-            <Link className={isActive("/top") ? "text-white" : "text-neutral-300 hover:text-white"} href="/top">Top</Link>
-            <Link className={isActive("/search") ? "text-white" : "text-neutral-300 hover:text-white"} href="/search">Search</Link>
-            <Link className={isActive("/submit") ? "text-white" : "text-neutral-300 hover:text-white"} href="/submit">Submit</Link>
-            <Link href="/login" className="rounded bg-blue-600 px-3 py-1 text-white hover:bg-blue-500">Write a post</Link>
-          </nav>
+          <div className="flex items-center gap-3">
+            <ProfileLink />
+            <Link
+              href="/submit"
+              className="hidden sm:inline-flex rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium hover:bg-blue-500"
+            >
+              Write a post
+            </Link>
+          </div>
+        </div>
+
+        {/* Subtle tagline under the bar (no layout disruption) */}
+        <div className="hidden md:block pb-3">
+          <p className="text-xs text-zinc-400">{TAGLINE}</p>
         </div>
       </div>
     </header>

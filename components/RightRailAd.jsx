@@ -1,11 +1,13 @@
 // components/RightRailAd.jsx
 export default function RightRailAd() {
   return (
-    <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4">
-      <div className="text-sm font-medium">Ads</div>
-      <p className="mt-2 text-sm text-neutral-400">
-        Ads will appear here and across the page (Auto Ads).
-      </p>
-    </div>
+    <aside className="hidden xl:block col-span-3">
+      <div className="rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4">
+        <p className="font-semibold mb-2">Ads</p>
+        <p className="text-sm text-zinc-400">
+          Ads will appear here and across the page (Auto Ads).
+        </p>
+      </div>
+    </aside>
   );
 }
