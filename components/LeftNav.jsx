@@ -1,46 +1,66 @@
-"use client";
-
-import Link from "next/link";
-import { useSession } from "next-auth/react";
+// components/LeftNav.jsx
+import Link from 'next/link';
 
 const categories = [
-  "Confessions","Posts","Product Reviews","Movie Reviews","Place Reviews","Post Ideas","Post Ads","Business Info","Sports","Science","Automobile","Education","Anime","Technology","Travel","Food","Health","Finance","Fashion","Books","Music","Gaming","Photography","Art","History","Relationships","Career","Pets","Gardening","DIY","Parenting","Fitness"
+  'Confessions','Posts','Product Reviews','Movie Reviews','Place Reviews','Post Ideas','Post Ads','Business Info',
+  'Sports','Science','Automobile','Education','Anime','Technology','Travel','Food','Health','Finance','Fashion',
+  'Books','Music','Gaming','Photography','Art','History','Relationships','Career','Pets','Gardening','DIY',
+  'Parenting','Fitness'
+];
+
+const staticPages = [
+  { href: '/community', label: 'Community' },
+  { href: '/faq', label: 'FAQ' },
+  { href: '/rules', label: 'Rules' },
+  { href: '/policy', label: 'Policy' },
+  { href: '/privacy', label: 'Privacy' },
+  { href: '/terms', label: 'Terms' },
+  { href: '/trademark', label: 'Trademark' },
 ];
 
 export default function LeftNav() {
-  const { data: session } = useSession();
-
   return (
-    <div>
-      <div className="nav-section-title">Navigate</div>
-
-      {/* Remove Home/Top/Search/Submit here per your request */}
-      <Link href="/profile" className="nav-item">
-        {session?.user ? "Profile" : "Profile (login)"}
-      </Link>
-
-      <div className="nav-section-title">Categories</div>
-      <ul className="space-y-1">
-        {categories.map((c) => (
-          <li key={c}>
-            <Link href={`/c/${encodeURIComponent(c.toLowerCase().replace(/\s+/g, "-"))}`} className="nav-item">
-              {c}
+    <nav className="text-sm">
+      <div className="mb-6">
+        <div className="mb-2 text-[11px] uppercase tracking-widest text-neutral-400">Navigate</div>
+        <ul className="space-y-1">
+          <li>
+            <Link href="/profile" className="block rounded-md px-3 py-2 hover:bg-neutral-900">
+              Profile
             </Link>
           </li>
-        ))}
-      </ul>
+        </ul>
+      </div>
 
-      <div className="hr" />
+      <div className="mb-6">
+        <div className="mb-2 text-[11px] uppercase tracking-widest text-neutral-400">Categories</div>
+        <ul className="space-y-1">
+          {categories.map((label) => {
+            const slug = label.toLowerCase().replace(/\s+/g, '-');
+            return (
+              <li key={slug}>
+                <Link href={`/c/${slug}`} className="block rounded-md px-3 py-2 hover:bg-neutral-900">
+                  {label}
+                </Link>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
 
-      <ul className="space-y-1">
-        <li><Link href="/community" className="nav-item">Community</Link></li>
-        <li><Link href="/faq" className="nav-item">FAQ</Link></li>
-        <li><Link href="/rules" className="nav-item">Rules</Link></li>
-        <li><Link href="/policy" className="nav-item">Policy</Link></li>
-        <li><Link href="/privacy" className="nav-item">Privacy</Link></li>
-        <li><Link href="/terms" className="nav-item">Terms</Link></li>
-        <li><Link href="/trademark" className="nav-item">Trademark</Link></li>
-      </ul>
-    </div>
+      <hr className="mb-6 border-neutral-800" />
+
+      <div className="mb-6">
+        <ul className="space-y-1">
+          {staticPages.map((p) => (
+            <li key={p.href}>
+              <Link href={p.href} className="block rounded-md px-3 py-2 hover:bg-neutral-900">
+                {p.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+    </nav>
   );
 }

@@ -1,41 +1,33 @@
-"use client";
+// app/profile/settings/page.js
+import AliasCard from '@/components/AliasCard';
 
-import { useSession, signOut } from "next-auth/react";
+export const metadata = {
+  title: 'Profile Settings • NinePlans',
+};
 
-export default function SettingsPage() {
-  const { data: session } = useSession();
-
+export default function ProfileSettingsPage() {
   return (
     <div className="space-y-6">
-      <div className="card flex items-center justify-between">
-        <div>
-          <div className="text-xl font-semibold">
-            {session?.user?.name || "Settings"}
-          </div>
-          <div className="text-sm text-neutral-400">{session?.user?.email}</div>
-        </div>
-        <div className="flex items-center gap-2">
-          <a href="/profile" className="rounded-md bg-neutral-800 px-3 py-2 text-sm hover:bg-neutral-700">
-            Profile
-          </a>
-          <button
-            className="rounded-md bg-red-600 px-3 py-2 text-sm hover:bg-red-500"
-            onClick={() => signOut({ callbackUrl: "/" })}
-          >
-            Sign out
-          </button>
-        </div>
-      </div>
+      {/* Alias controls */}
+      <AliasCard />
 
-      {/* Placeholder tiles – replace with your real settings form anytime */}
-      <div className="grid gap-4 md:grid-cols-2">
-        <div className="card">
-          <div className="mb-2 font-medium">Alias</div>
-          <div className="text-sm text-neutral-400">Use an alias to post anonymously.</div>
+      {/* The rest of the profile summary boxes (consistent look with /profile) */}
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4">
+          <div className="font-semibold">Your posts</div>
+          <p className="mt-2 text-sm text-neutral-400">No posts yet.</p>
         </div>
-        <div className="card">
-          <div className="mb-2 font-medium">Notifications</div>
-          <div className="text-sm text-neutral-400">Notification preferences coming soon.</div>
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4">
+          <div className="font-semibold">Liked</div>
+          <p className="mt-2 text-sm text-neutral-400">No likes yet.</p>
+        </div>
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4">
+          <div className="font-semibold">Saved</div>
+          <p className="mt-2 text-sm text-neutral-400">No saved posts yet.</p>
+        </div>
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900/40 p-4">
+          <div className="font-semibold">Comments</div>
+          <p className="mt-2 text-sm text-neutral-400">No comments yet.</p>
         </div>
       </div>
     </div>
