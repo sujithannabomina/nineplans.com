@@ -1,97 +1,46 @@
-<<<<<<< HEAD
-"use client";
+// Central place for all category/static links used by LeftRail & MobileMenu
 
-import Link from "next/link";
-
-// Single source of truth for categories
 export const CATEGORIES = [
-  "Confessions",
-  "Posts",
-  "Product Reviews",
-  "Movie Reviews",
-  "Place Reviews",
-  "Post Ideas",
-  "Post Ads",
-  "Business Info",
-  "Sports",
-  "Science",
-  "Automobile",
-  "Education",
-  "Anime",
-  "Games",
+  { slug: "confessions", label: "Confessions" },
+  { slug: "posts", label: "Posts" },
+  { slug: "product-reviews", label: "Product Reviews" },
+  { slug: "movie-reviews", label: "Movie Reviews" },
+  { slug: "place-reviews", label: "Place Reviews" },
+  { slug: "post-ideas", label: "Post Ideas" },
+  { slug: "post-ads", label: "Post Ads" },
+  { slug: "business-info", label: "Business Info" },
+  { slug: "sports", label: "Sports" },
+  { slug: "science", label: "Science" },
+  { slug: "automobile", label: "Automobile" },
+  { slug: "education", label: "Education" },
+  { slug: "anime", label: "Anime" },
+  { slug: "technology", label: "Technology" },
+  { slug: "travel", label: "Travel" },
+  { slug: "food", label: "Food" },
+  { slug: "health", label: "Health" },
+  { slug: "finance", label: "Finance" },
+  { slug: "fashion", label: "Fashion" },
+  { slug: "books", label: "Books" },
+  { slug: "music", label: "Music" },
+  { slug: "gaming", label: "Gaming" },
+  { slug: "photography", label: "Photography" },
+  { slug: "art", label: "Art" },
+  { slug: "history", label: "History" },
+  { slug: "relationships", label: "Relationships" },
+  { slug: "career", label: "Career" },
+  { slug: "pets", label: "Pets" },
+  { slug: "gardening", label: "Gardening" },
+  { slug: "diy", label: "DIY" },
+  { slug: "parenting", label: "Parenting" },
+  { slug: "fitness", label: "Fitness" },
 ];
 
-export const toSlug = (name) => name;        // keep display text
-export const fromSlug = (slug) => slug;      // keep display text
-
-export default function CategoryLinks({ className = "" }) {
-  return (
-    <nav className={className}>
-      <h3 className="text-sm uppercase tracking-widest text-zinc-400 mb-3">
-        Categories
-      </h3>
-      <ul className="space-y-2">
-        {CATEGORIES.map((cat) => (
-          <li key={cat}>
-            {/* IMPORTANT: go to home with ?cat=... */}
-            <Link
-              href={`/?cat=${encodeURIComponent(cat)}`}
-              className="block px-2 py-1 rounded hover:bg-zinc-800/70"
-            >
-              {cat}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-}
-=======
-"use client";
-
-import Link from "next/link";
-
-// Single source of truth for categories
-export const CATEGORIES = [
-  "Confessions",
-  "Posts",
-  "Product Reviews",
-  "Movie Reviews",
-  "Place Reviews",
-  "Post Ideas",
-  "Post Ads",
-  "Business Info",
-  "Sports",
-  "Science",
-  "Automobile",
-  "Education",
-  "Anime",
-  "Games",
+export const STATIC_PAGES = [
+  { href: "community", label: "Community" },
+  { href: "faq", label: "FAQ" },
+  { href: "rules", label: "Rules" },
+  { href: "policy", label: "Policy" },
+  { href: "privacy", label: "Privacy" },
+  { href: "terms", label: "Terms" },
+  { href: "trademark", label: "Trademark" },
 ];
-
-export const toSlug = (name) => name;        // keep display text
-export const fromSlug = (slug) => slug;      // keep display text
-
-export default function CategoryLinks({ className = "" }) {
-  return (
-    <nav className={className}>
-      <h3 className="text-sm uppercase tracking-widest text-zinc-400 mb-3">
-        Categories
-      </h3>
-      <ul className="space-y-2">
-        {CATEGORIES.map((cat) => (
-          <li key={cat}>
-            {/* IMPORTANT: go to home with ?cat=... */}
-            <Link
-              href={`/?cat=${encodeURIComponent(cat)}`}
-              className="block px-2 py-1 rounded hover:bg-zinc-800/70"
-            >
-              {cat}
-            </Link>
-          </li>
-        ))}
-      </ul>
-    </nav>
-  );
-}
->>>>>>> 724b0ef (Initial commit from local working folder)
