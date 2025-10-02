@@ -1,24 +1,24 @@
 // app/login/page.jsx
-"use client";
+import PageShell from "@/components/PageShell";
+import Link from "next/link";
 
-import { signIn } from "next-auth/react";
+export const metadata = { title: "Log in • NinePlans" };
 
 export default function LoginPage() {
   return (
-    <main className="mx-auto flex min-h-[calc(100vh-64px)] max-w-2xl items-center justify-center px-4">
-      <div className="w-full rounded-2xl border border-neutral-800 bg-neutral-950 p-8 text-center shadow">
-        <h1 className="mb-6 text-2xl font-semibold">Sign in</h1>
-        <button
-          onClick={() => signIn("google", { callbackUrl: "/submit" })}
-          className="mx-auto block w-full rounded-xl border border-neutral-700 bg-white px-5 py-3 text-base font-medium text-black hover:opacity-90"
-        >
-          <span className="mr-2 align-middle">🔒</span>
-          Sign in with Google
-        </button>
-        <p className="mt-3 text-xs text-neutral-400">
-          You can still post anonymously after sign in.
+    <PageShell>
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-6">
+        <h1 className="text-xl font-semibold mb-2">Log in to NinePlans</h1>
+        <p className="text-sm text-zinc-400 mb-4">
+          You can still post using an Alias after logging in.
         </p>
+        <Link
+          href="/api/auth/signin/google"
+          className="inline-flex items-center rounded-md bg-blue-600 px-4 py-2 hover:bg-blue-500"
+        >
+          Sign in with Google
+        </Link>
       </div>
-    </main>
+    </PageShell>
   );
 }

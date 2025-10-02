@@ -3,64 +3,66 @@
 
 import { useEffect, useState } from "react";
 
-export default function AliasCard() {
-  const [alias, setAlias] = useState("");
-  const [saved, setSaved] = useState(false);
-  const [error, setError] = useState("");
+export default function AliasCard({ initialAlias }) {
+  const [alias, setAlias] = useState(initialAlias ?? "");
+  const [saving, setSaving] = useState(false);
+  const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    const a = localStorage.getItem("np_alias") || "";
-    setAlias(a);
-  }, []);
+    setAlias(initialAlias ?? "");
+  }, [initialAlias]);
 
-  function save() {
-    const trimmed = alias.trim();
-    if (trimmed.length < 2 || trimmed.length > 20) {
-      setError("Alias must be 2–20 characters.");
-      setSaved(false);
-      return;
+  async function saveAlias() {
+    setSaving(true);
+    setMsg("");
+    try {
+      const res = await fetch("/api/profile", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ alias: alias.trim() || null }),
+      });
+      if (!res.ok) throw new Error("Failed");
+      setMsg("Saved!");
+    } catch {
+      setMsg("Could not save. Try again.");
+    } finally {
+      setSaving(false);
+      setTimeout(() => setMsg(""), 2000);
     }
-    localStorage.setItem("np_alias", trimmed);
-    setError("");
-    setSaved(true);
-    setTimeout(() => setSaved(false), 1500);
   }
 
   function clearAlias() {
-    localStorage.removeItem("np_alias");
     setAlias("");
-    setSaved(false);
-    setError("");
   }
 
   return (
-    <div className="rounded-xl border border-neutral-800 bg-neutral-900 p-4">
-      <div className="mb-2 text-sm font-medium text-neutral-300">Alias</div>
-      <p className="mb-3 text-sm text-neutral-400">
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4 mb-6">
+      <h3 className="font-semibold mb-2">Alias</h3>
+      <p className="text-sm text-zinc-400 mb-3">
         Choose a public alias. When submitting, select <b>Post as: Alias</b>.
       </p>
-      <div className="flex flex-col gap-2 sm:flex-row">
+      <div className="flex items-center gap-2">
         <input
           value={alias}
           onChange={(e) => setAlias(e.target.value)}
           placeholder="e.g. NightOwl"
-          className="w-full rounded-md border border-neutral-700 bg-neutral-800 px-3 py-2 outline-none"
+          className="flex-1 rounded-md bg-zinc-950 border border-zinc-800 px-3 py-2 outline-none focus:border-zinc-700"
         />
         <button
-          onClick={save}
-          className="rounded-md bg-sky-600 px-4 py-2 font-medium text-white hover:bg-sky-500"
+          onClick={saveAlias}
+          disabled={saving}
+          className="rounded-md bg-sky-600 px-4 py-2 hover:bg-sky-500 disabled:opacity-60"
         >
-          Save
+          {saving ? "Saving…" : "Save"}
         </button>
         <button
           onClick={clearAlias}
-          className="rounded-md border border-neutral-700 px-4 py-2 hover:bg-neutral-800"
+          className="rounded-md border border-zinc-800 px-4 py-2 hover:bg-zinc-900"
         >
           Clear
         </button>
       </div>
-      {saved && <div className="mt-2 text-sm text-emerald-400">Saved.</div>}
-      {error && <div className="mt-2 text-sm text-rose-400">{error}</div>}
+      {msg && <div className="mt-2 text-sm text-zinc-300">{msg}</div>}
     </div>
   );
 }

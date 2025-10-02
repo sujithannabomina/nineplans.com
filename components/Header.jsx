@@ -1,60 +1,69 @@
 // components/Header.jsx
-'use client';
+"use client";
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import ProfileLink from './ProfileLink';
-
-const nav = [
-  { href: '/', label: 'Home' },
-  { href: '/top', label: 'Top' },
-  { href: '/search', label: 'Search' },
-  { href: '/submit', label: 'Submit' },
-];
-
-const TAGLINE = 'You can write confessions anonymously, even when you’re logged in.';
+import Link from "next/link";
+import { signOut, useSession } from "next-auth/react";
+import MobileMenu from "./MobileMenu";
 
 export default function Header() {
-  const pathname = usePathname();
+  const { data: session } = useSession();
 
   return (
-    <header className="sticky top-0 z-40 border-b border-zinc-900/70 bg-black/70 backdrop-blur">
-      <div className="mx-auto max-w-6xl px-4">
-        <div className="flex h-14 items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="h-6 w-6 rounded-full border border-zinc-600 ring-1 ring-cyan-400/40" />
-              <span className="font-semibold tracking-wide">NinePlans</span>
-            </Link>
-            <nav className="hidden md:flex items-center gap-6 ml-4 text-sm">
-              {nav.map((n) => (
-                <Link
-                  key={n.href}
-                  href={n.href}
-                  className={`hover:text-white ${
-                    pathname === n.href ? 'text-white' : 'text-zinc-400'
-                  }`}
-                >
-                  {n.label}
-                </Link>
-              ))}
-            </nav>
-          </div>
+    <header className="sticky top-0 z-40 border-b border-zinc-800 bg-zinc-950/80 backdrop-blur">
+      <div className="mx-auto max-w-7xl px-4 lg:px-6 h-14 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <MobileMenu />
+          <Link href="/" className="flex items-center gap-3">
+            <span className="inline-block h-6 w-6 rounded-full ring-2 ring-sky-500" />
+            <span className="font-semibold">NinePlans</span>
+          </Link>
 
-          <div className="flex items-center gap-3">
-            <ProfileLink />
-            <Link
-              href="/submit"
-              className="hidden sm:inline-flex rounded-md bg-blue-600 px-3 py-1.5 text-sm font-medium hover:bg-blue-500"
-            >
-              Write a post
-            </Link>
-          </div>
+          <nav className="hidden md:flex items-center gap-6 ml-6">
+            <Link href="/" className="text-zinc-200 hover:text-white">Home</Link>
+            <Link href="/top" className="text-zinc-200 hover:text-white">Top</Link>
+            <Link href="/search" className="text-zinc-200 hover:text-white">Search</Link>
+            <Link href="/submit" className="text-zinc-200 hover:text-white">Submit</Link>
+          </nav>
         </div>
 
-        {/* Subtle tagline under the bar (no layout disruption) */}
-        <div className="hidden md:block pb-3">
-          <p className="text-xs text-zinc-400">{TAGLINE}</p>
+        <div className="flex items-center gap-3">
+          {session ? (
+            <>
+              <Link
+                href="/profile"
+                className="hidden sm:inline-flex rounded-md bg-zinc-800 px-3 py-1.5 text-sm hover:bg-zinc-700"
+              >
+                Profile
+              </Link>
+              <button
+                className="hidden sm:inline-flex rounded-md bg-red-600 px-3 py-1.5 text-sm hover:bg-red-500"
+                onClick={() => signOut()}
+              >
+                Sign out
+              </button>
+              <Link
+                href="/submit"
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm hover:bg-blue-500"
+              >
+                Write a post
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className="rounded-md bg-zinc-800 px-3 py-1.5 text-sm hover:bg-zinc-700"
+              >
+                Log in
+              </Link>
+              <Link
+                href="/submit"
+                className="rounded-md bg-blue-600 px-3 py-1.5 text-sm hover:bg-blue-500"
+              >
+                Write a post
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

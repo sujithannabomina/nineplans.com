@@ -1,52 +1,28 @@
 // app/top/page.jsx
-import Link from 'next/link';
-import LeftRail from '@/components/LeftRail';
-import RightRailAd from '@/components/RightRailAd';
+import Link from "next/link";
+import PageShell from "@/components/PageShell";
 
-export const metadata = { title: 'Top • NinePlans' };
+export const metadata = { title: "Top • NinePlans" };
+
+const Tile = ({ href, title, description }) => (
+  <Link
+    href={href}
+    className="block rounded-xl border border-zinc-800 bg-zinc-900/50 p-5 hover:bg-zinc-900 transition"
+  >
+    <h3 className="text-lg font-semibold">{title}</h3>
+    <p className="text-sm text-zinc-400">{description}</p>
+  </Link>
+);
 
 export default function TopPage() {
   return (
-    <div className="mx-auto max-w-6xl px-4 py-6 grid grid-cols-12 gap-6">
-      <LeftRail />
-
-      <main className="col-span-12 lg:col-span-9 xl:col-span-6 space-y-6">
-        <div className="grid md:grid-cols-2 gap-6">
-          <Link
-            href="/top/viewed"
-            className="rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4 hover:border-zinc-700"
-          >
-            <h2 className="text-lg font-semibold mb-1">Most Viewed</h2>
-            <p className="text-sm text-zinc-400">What everyone’s reading</p>
-          </Link>
-
-          <Link
-            href="/top/liked"
-            className="rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4 hover:border-zinc-700"
-          >
-            <h2 className="text-lg font-semibold mb-1">Most Liked</h2>
-            <p className="text-sm text-zinc-400">Community favorites</p>
-          </Link>
-        </div>
-
-        <Link
-          href="/top/commented"
-          className="block rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4 hover:border-zinc-700"
-        >
-          <h2 className="text-lg font-semibold mb-1">Most Commented</h2>
-          <p className="text-sm text-zinc-400">Biggest discussions</p>
-        </Link>
-
-        <Link
-          href="/top/saved"
-          className="block rounded-xl border border-zinc-800/70 bg-zinc-950/40 p-4 hover:border-zinc-700"
-        >
-          <h2 className="text-lg font-semibold mb-1">Most Saved</h2>
-          <p className="text-sm text-zinc-400">Bookmarked the most</p>
-        </Link>
-      </main>
-
-      <RightRailAd />
-    </div>
+    <PageShell>
+      <div className="grid gap-6 md:grid-cols-2">
+        <Tile href="/top/viewed" title="Most Viewed" description="What everyone’s reading" />
+        <Tile href="/top/liked" title="Most Liked" description="Community favorites" />
+        <Tile href="/top/commented" title="Most Commented" description="Biggest discussions" />
+        <Tile href="/top/saved" title="Most Saved" description="Bookmarked the most" />
+      </div>
+    </PageShell>
   );
 }

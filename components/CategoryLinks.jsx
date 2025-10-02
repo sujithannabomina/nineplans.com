@@ -1,5 +1,4 @@
-// Central place for all category/static links used by LeftRail & MobileMenu
-
+// components/CategoryLinks.jsx
 export const CATEGORIES = [
   { slug: "confessions", label: "Confessions" },
   { slug: "posts", label: "Posts" },
@@ -20,27 +19,19 @@ export const CATEGORIES = [
   { slug: "health", label: "Health" },
   { slug: "finance", label: "Finance" },
   { slug: "fashion", label: "Fashion" },
-  { slug: "books", label: "Books" },
-  { slug: "music", label: "Music" },
-  { slug: "gaming", label: "Gaming" },
-  { slug: "photography", label: "Photography" },
-  { slug: "art", label: "Art" },
-  { slug: "history", label: "History" },
-  { slug: "relationships", label: "Relationships" },
-  { slug: "career", label: "Career" },
-  { slug: "pets", label: "Pets" },
-  { slug: "gardening", label: "Gardening" },
-  { slug: "diy", label: "DIY" },
-  { slug: "parenting", label: "Parenting" },
-  { slug: "fitness", label: "Fitness" },
+  // …keep your remaining categories if you have more
 ];
 
 export const STATIC_PAGES = [
-  { href: "community", label: "Community" },
-  { href: "faq", label: "FAQ" },
-  { href: "rules", label: "Rules" },
-  { href: "policy", label: "Policy" },
-  { href: "privacy", label: "Privacy" },
-  { href: "terms", label: "Terms" },
-  { href: "trademark", label: "Trademark" },
+  { href: "/community", label: "Community" },
+  { href: "/faq", label: "FAQ" },
+  { href: "/rules", label: "Rules" },
+  { href: "/policy", label: "Policy" },
+  { href: "/privacy", label: "Privacy" },
+  { href: "/terms", label: "Terms" },
+  { href: "/trademark", label: "Trademark" },
 ];
+
+export function getCategoryBySlug(slug) {
+  return CATEGORIES.find((c) => c.slug === slug) || null;
+}
