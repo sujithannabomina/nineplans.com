@@ -1,58 +1,73 @@
 // app/api/profile/route.js
-import { NextResponse } from "next/server";
-import { adminDb } from "@/lib/firebaseAdmin";
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/app/api/auth/[...nextauth]/authOptions'; // adjust if your authOptions path differs
+import prisma from '@/lib/prisma';
+import { validateAlias } from '@/lib/alias';
 
-// Force Node runtime (Admin SDK requires it)
-export const runtime = "nodejs";
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ alias: null }, { status: 200 });
+  }
 
-async function getUserId(req) {
-  // Simplified: we read an auth cookie set by NextAuth
-  // If your project already uses NextAuth, prefer requesting the userId from the client and posting it here.
-  // To avoid coupling, we also accept x-user-id in headers for now.
-  const explicit = req.headers.get("x-user-id");
-  if (explicit) return explicit;
+  const user = await prisma.user.findUnique({
+    where: { email: session.user.email },
+    select: { alias: true },
+  });
 
-  // If you already expose the uid to the client in a secure way, keep using that.
-  return null;
+  return NextResponse.json({ alias: user?.alias || null });
 }
 
-export async function GET(req) {
-  try {
-    const uid = await getUserId(req);
-    if (!uid) {
-      // Anonymous viewer: return minimal profile shell
-      return NextResponse.json({ ok: true, profile: { alias: "" } }, { status: 200 });
-    }
-
-    const ref = adminDb.collection("users").doc(uid);
-    const snap = await ref.get();
-    const data = snap.exists ? snap.data() : {};
-    return NextResponse.json({ ok: true, profile: { alias: data.alias || "" } });
-  } catch (err) {
-    console.error("GET /api/profile", err);
-    return NextResponse.json({ ok: false, error: "PROFILE_READ_FAILED" }, { status: 500 });
+export async function POST(req) {
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.email) {
+    return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
   }
-}
 
-export async function PATCH(req) {
-  try {
-    const uid = await getUserId(req);
-    if (!uid) return NextResponse.json({ ok: false, error: "UNAUTHENTICATED" }, { status: 401 });
+  const body = await req.json().catch(() => ({}));
+  const raw = (body?.alias ?? '').trim();
 
-    const body = await req.json();
-    const newAlias = String(body.alias || "").trim().slice(0, 24); // soft limit
-
-    await adminDb.collection("users").doc(uid).set(
-      {
-        alias: newAlias,
-        updatedAt: Date.now(),
-      },
-      { merge: true }
-    );
-
-    return NextResponse.json({ ok: true, alias: newAlias });
-  } catch (err) {
-    console.error("PATCH /api/profile", err);
-    return NextResponse.json({ ok: false, error: "PROFILE_UPDATE_FAILED" }, { status: 500 });
+  // Allow clearing alias
+  if (raw.length === 0) {
+    await prisma.user.update({
+      where: { email: session.user.email },
+      data: { alias: null },
+    }).catch(async (e) => {
+      // In case user row doesn't exist yet
+      await prisma.user.upsert({
+        where: { email: session.user.email },
+        update: { alias: null },
+        create: { email: session.user.email, name: session.user.name || null, alias: null },
+      });
+    });
+    return NextResponse.json({ ok: true, alias: null });
   }
+
+  // Validate + normalize
+  const alias = validateAlias(raw);
+  if (!alias.ok) {
+    return NextResponse.json({ error: alias.error }, { status: 400 });
+  }
+
+  // Ensure uniqueness
+  const exists = await prisma.user.findFirst({
+    where: {
+      alias: alias.value,
+      NOT: { email: session.user.email },
+    },
+    select: { id: true },
+  });
+  if (exists) {
+    return NextResponse.json({ error: 'Alias is already taken.' }, { status: 409 });
+  }
+
+  // Upsert user + set alias
+  await prisma.user.upsert({
+    where: { email: session.user.email },
+    update: { alias: alias.value, name: session.user.name || undefined },
+    create: { email: session.user.email, name: session.user.name || null, alias: alias.value },
+  });
+
+  return NextResponse.json({ ok: true, alias: alias.value });
 }
