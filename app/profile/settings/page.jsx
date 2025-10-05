@@ -5,52 +5,48 @@ import { useEffect, useState } from 'react';
 import LeftNav from '@/components/LeftNav';
 import RightRailAd from '@/components/RightRailAd';
 
+const LS_KEY = 'np_alias';
+
 export default function SettingsPage() {
   const [alias, setAlias] = useState('');
-  const [loading, setLoading] = useState(false);
   const [msg, setMsg] = useState(null);
+  const [saving, setSaving] = useState(false);
 
+  // Load saved alias from localStorage
   useEffect(() => {
-    let ignore = false;
-    (async () => {
-      try {
-        const res = await fetch('/api/profile', { cache: 'no-store' });
-        if (!res.ok) return;
-        const data = await res.json();
-        if (!ignore && data?.alias) setAlias(data.alias);
-      } catch (_) {
-        // ignore
-      }
-    })();
-    return () => { ignore = true; };
+    try {
+      const saved = typeof window !== 'undefined' ? localStorage.getItem(LS_KEY) : '';
+      if (saved) setAlias(saved);
+    } catch {}
   }, []);
 
-  async function saveAlias() {
-    setLoading(true);
+  const save = async () => {
+    setSaving(true);
     setMsg(null);
     try {
-      const res = await fetch('/api/profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ alias: alias || '' }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) {
-        setMsg(data?.error || 'Could not save. Try again.');
-      } else {
-        setMsg('Saved.');
+      const value = (alias || '').trim();
+      if (value && !/^[A-Za-z0-9][A-Za-z0-9_-]{1,23}$/.test(value)) {
+        setMsg('Use 2–24 chars. Letters/numbers, "-" or "_". Start with a letter/number.');
+        setSaving(false);
+        return;
       }
-    } catch (e) {
+      if (typeof window !== 'undefined') {
+        if (value) localStorage.setItem(LS_KEY, value);
+        else localStorage.removeItem(LS_KEY);
+      }
+      setMsg('Saved.');
+    } catch {
       setMsg('Could not save. Try again.');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
-  }
+  };
 
-  function clearAlias() {
+  const clearAlias = () => {
     setAlias('');
     setMsg(null);
-  }
+    try { localStorage.removeItem(LS_KEY); } catch {}
+  };
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
@@ -73,11 +69,11 @@ export default function SettingsPage() {
                 maxLength={24}
               />
               <button
-                onClick={saveAlias}
-                disabled={loading}
+                onClick={save}
+                disabled={saving}
                 className="rounded-md bg-blue-600 hover:bg-blue-500 disabled:opacity-60 px-4 py-2 text-sm font-medium"
               >
-                {loading ? 'Saving…' : 'Save'}
+                {saving ? 'Saving…' : 'Save'}
               </button>
               <button
                 onClick={clearAlias}
@@ -94,7 +90,7 @@ export default function SettingsPage() {
             )}
           </section>
 
-          {/* Your existing cards below */}
+          {/* Your existing four cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-5">
               <h3 className="font-semibold mb-2">Your posts</h3>
