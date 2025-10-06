@@ -1,24 +1,34 @@
-import NextAuth from "next-auth";
-import Google from "next-auth/providers/google";
+// app/api/auth/[...nextauth]/route.js
+import NextAuth from 'next-auth';
+import GoogleProvider from 'next-auth/providers/google';
+
+export const runtime = 'nodejs';
 
 export const authOptions = {
   providers: [
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID || '',
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET || '',
     }),
   ],
-  session: { strategy: "jwt" },
+  session: { strategy: 'jwt' },
   callbacks: {
+    async jwt({ token, account, profile }) {
+      if (account?.provider === 'google') {
+        token.email = profile?.email || token.email;
+        token.name = profile?.name || token.name;
+        token.picture = profile?.picture || token.picture;
+      }
+      return token;
+    },
     async session({ session, token }) {
-      // Attach token sub as id for convenience
-      if (session?.user && token?.sub) session.user.id = token.sub;
+      if (token?.email) session.user.email = token.email;
+      if (token?.name) session.user.name = token.name;
+      if (token?.picture) session.user.image = token.picture;
       return session;
     },
   },
-  // You can add pages: { signIn: '/login' } if you want a custom page
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };
