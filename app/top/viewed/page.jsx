@@ -1,15 +1,30 @@
 // app/top/viewed/page.jsx
-import PageShell from "@/components/PageShell";
+export const dynamic = 'force-dynamic';
 
-export const metadata = { title: "Most Viewed • NinePlans" };
+import LeftNav from '@/components/LeftNav';
+import RightRail from '@/components/RightRail';
+import TopList from '@/components/TopList';
 
-export default function TopViewedPage() {
+export default async function TopViewedPage() {
   return (
-    <PageShell>
-      <h1 className="text-2xl font-bold mb-4">Most Viewed</h1>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-        <p className="text-zinc-400">No posts yet. Be the first to write one.</p>
+    <div className="container mx-auto px-3 lg:px-6 py-4">
+      <div className="grid grid-cols-12 gap-4">
+        {/* Left */}
+        <aside className="hidden lg:block col-span-12 lg:col-span-3">
+          <LeftNav />
+        </aside>
+
+        {/* Main */}
+        <main className="col-span-12 lg:col-span-6">
+          <h1 className="text-xl font-semibold mb-4">Top — Most Viewed</h1>
+          <TopList by="viewed" />
+        </main>
+
+        {/* Right */}
+        <aside className="hidden lg:block col-span-12 lg:col-span-3">
+          <RightRail />
+        </aside>
       </div>
-    </PageShell>
+    </div>
   );
 }

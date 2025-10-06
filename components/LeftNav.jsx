@@ -3,76 +3,53 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useSession, signIn } from 'next-auth/react';
+import { CATEGORIES, STATIC_PAGES } from './CategoryLinks';
 
-// Single source of truth for links
-export const CATEGORIES = [
-  'Confessions','Posts','Product Reviews','Movie Reviews','Place Reviews','Post Ideas','Post Ads','Business Info',
-  'Sports','Science','Automobile','Education','Anime','Technology','Travel','Food','Health','Finance','Fashion',
-  'Books','Music','Gaming','Photography','Art','History','Relationships','Career','Pets','Gardening','DIY','Parenting','Fitness'
-];
-
-export const STATIC_PAGES = [
-  { href: '/community', label: 'Community' },
-  { href: '/faq',       label: 'FAQ' },
-  { href: '/rules',     label: 'Rules' },
-  { href: '/policy',    label: 'Policy' },
-  { href: '/privacy',   label: 'Privacy' },
-  { href: '/terms',     label: 'Terms' },
-  { href: '/trademark', label: 'Trademark' },
-];
-
-function Section({ title, children }) {
-  return (
-    <div>
-      <div className="text-xs uppercase tracking-wide text-zinc-400 mb-3 select-none">{title}</div>
-      {children}
-    </div>
-  );
-}
-
-function Item({ href, children }) {
+export default function LeftNav() {
+  const { data: session, status } = useSession();
   const pathname = usePathname();
-  const active = pathname === href;
-  return (
+
+  const Item = ({ href, children }) => (
     <Link
       href={href}
-      className={`block rounded-md px-3 py-2 text-sm transition-colors ${
-        active ? 'bg-zinc-800 text-white' : 'text-zinc-300 hover:text-white hover:bg-zinc-800/60'
+      className={`block rounded-md px-3 py-2 hover:bg-gray-800/60 ${
+        pathname === href ? 'bg-gray-800/70 text-white' : 'text-gray-300'
       }`}
     >
       {children}
     </Link>
   );
-}
 
-export default function LeftNav() {
   return (
-    <aside className="sticky top-20 hidden lg:block w-64 shrink-0">
-      <div className="space-y-8">
-        <Section title="NAVIGATE">
-          <div className="space-y-1">
-            <Item href="/profile">Profile</Item>
-          </div>
-        </Section>
+    <aside className="hidden lg:block w-64 shrink-0 sticky top-20 self-start">
+      <div className="text-sm text-gray-400 mb-2">NAVIGATE</div>
+      <div className="mb-6">
+        {status === 'authenticated' ? (
+          <Item href="/profile">Profile</Item>
+        ) : (
+          <button
+            onClick={() => signIn('google')}
+            className="block w-full rounded-md px-3 py-2 text-left bg-gray-800/60 hover:bg-gray-800/80 text-gray-200"
+          >
+            Profile (login)
+          </button>
+        )}
+      </div>
 
-        <Section title="CATEGORIES">
-          <div className="max-h-[52vh] overflow-y-auto pr-1 space-y-1">
-            {CATEGORIES.map((c) => {
-              const slug = c.toLowerCase().replace(/\s+/g, '-');
-              return (
-                <Item key={c} href={`/c/${encodeURIComponent(slug)}`}>{c}</Item>
-              );
-            })}
-          </div>
-        </Section>
+      <div className="text-sm text-gray-400 mb-2">CATEGORIES</div>
+      <div className="space-y-1 max-h-[55vh] overflow-y-auto pr-1">
+        {CATEGORIES.map(({ name }) => (
+          <Item key={name} href={`/c/${encodeURIComponent(name.toLowerCase().replace(/\s+/g, '-'))}`}>
+            {name}
+          </Item>
+        ))}
+      </div>
 
-        <hr className="border-zinc-800" />
-
-        <div className="space-y-1">
-          {STATIC_PAGES.map((p) => (
-            <Item key={p.href} href={p.href}>{p.label}</Item>
-          ))}
-        </div>
+      <div className="mt-6 pt-6 border-t border-gray-800 space-y-1">
+        {STATIC_PAGES.map(p => (
+          <Item key={p.href} href={p.href}>{p.name}</Item>
+        ))}
       </div>
     </aside>
   );

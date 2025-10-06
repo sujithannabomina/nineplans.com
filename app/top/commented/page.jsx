@@ -1,15 +1,27 @@
 // app/top/commented/page.jsx
-import PageShell from "@/components/PageShell";
+export const dynamic = 'force-dynamic';
 
-export const metadata = { title: "Most Commented • NinePlans" };
+import LeftNav from '@/components/LeftNav';
+import RightRail from '@/components/RightRail';
+import TopList from '@/components/TopList';
 
-export default function TopCommentedPage() {
+export default async function TopCommentedPage() {
   return (
-    <PageShell>
-      <h1 className="text-2xl font-bold mb-4">Most Commented</h1>
-      <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-        <p className="text-zinc-400">No posts yet. Be the first to write one.</p>
+    <div className="container mx-auto px-3 lg:px-6 py-4">
+      <div className="grid grid-cols-12 gap-4">
+        <aside className="hidden lg:block col-span-12 lg:col-span-3">
+          <LeftNav />
+        </aside>
+
+        <main className="col-span-12 lg:col-span-6">
+          <h1 className="text-xl font-semibold mb-4">Top — Most Commented</h1>
+          <TopList by="commented" />
+        </main>
+
+        <aside className="hidden lg:block col-span-12 lg:col-span-3">
+          <RightRail />
+        </aside>
       </div>
-    </PageShell>
+    </div>
   );
 }

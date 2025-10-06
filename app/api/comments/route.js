@@ -1,4 +1,4 @@
-// app/api/post/route.js
+// app/api/comments/route.js
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { adminDB } from '@/lib/firebaseAdmin';
@@ -8,21 +8,15 @@ export const runtime = 'nodejs';
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
-  const mine = searchParams.get('mine') === '1';
+  const postId = searchParams.get('postId');
+  if (!postId) return NextResponse.json({ items: [] }, { status: 200 });
 
-  if (mine) {
-    const session = await getServerSession(authOptions);
-    if (!session?.user?.email) return NextResponse.json({ items: [] }, { status: 200 });
-    const q = await adminDB
-      .collection('posts')
-      .where('userId', '==', session.user.email)
-      .orderBy('createdAt', 'desc')
-      .limit(100)
-      .get();
-    return NextResponse.json({ items: q.docs.map(d => ({ id: d.id, ...d.data() })) }, { status: 200 });
-  }
+  const q = await adminDB
+    .collection('comments')
+    .where('postId', '==', postId)
+    .orderBy('createdAt', 'asc')
+    .get();
 
-  const q = await adminDB.collection('posts').orderBy('createdAt', 'desc').limit(50).get();
   return NextResponse.json({ items: q.docs.map(d => ({ id: d.id, ...d.data() })) }, { status: 200 });
 }
 
@@ -30,11 +24,8 @@ export async function POST(req) {
   const session = await getServerSession(authOptions);
   if (!session?.user?.email) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
 
-  const { content = '', category = 'Posts', postAs = 'USER', images = [], imagePaths = [] } =
-    await req.json().catch(() => ({}));
-
-  const text = content.trim();
-  if (!text) return NextResponse.json({ error: 'empty_post' }, { status: 400 });
+  const { postId, content, postAs = 'USER' } = await req.json().catch(() => ({}));
+  if (!postId || !content?.trim()) return NextResponse.json({ error: 'bad_request' }, { status: 400 });
 
   let alias = '';
   if (postAs === 'ALIAS') {
@@ -43,20 +34,14 @@ export async function POST(req) {
     if (!alias) return NextResponse.json({ error: 'no_alias' }, { status: 400 });
   }
 
-  const ref = adminDB.collection('posts').doc();
+  const ref = adminDB.collection('comments').doc();
   await ref.set({
+    postId,
     userId: session.user.email,
     authorName: session.user.name || '',
-    authorType: postAs, // USER | ALIAS
+    authorType: postAs,
     alias: postAs === 'ALIAS' ? alias : '',
-    category,
-    content: text,
-    images,
-    imagePaths,
-    likesCount: 0,
-    commentsCount: 0,
-    savesCount: 0,
-    viewsCount: 0,
+    content: content.trim(),
     createdAt: new Date(),
     updatedAt: new Date(),
   });

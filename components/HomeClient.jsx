@@ -1,30 +1,26 @@
 // components/HomeClient.jsx
 'use client';
 
-export default function HomeClient({ posts = [] }) {
-  // Simple, layout-safe feed renderer. No external deps, no edge runtime.
+import { useEffect, useState } from 'react';
+import PostCard from './PostCard';
+
+export default function HomeClient() {
+  const [posts, setPosts] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/post', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setPosts(d?.items || []))
+      .catch(() => {});
+  }, []);
+
   return (
     <section className="space-y-4">
+      <h1 className="text-3xl font-bold mb-2">Recent Posts</h1>
       {posts.length === 0 ? (
-        <div className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4">
-          <p className="text-zinc-400">No posts yet. Be the first to write one.</p>
-        </div>
+        <div className="rounded-md border border-gray-800 p-4 text-gray-400">No posts yet. Be the first to write one.</div>
       ) : (
-        <ul className="space-y-4">
-          {posts.map((p) => (
-            <li
-              key={p.id || p._id}
-              className="rounded-xl border border-zinc-800 bg-zinc-900/50 p-4"
-            >
-              {p.categoryLabel || p.category ? (
-                <div className="text-xs uppercase tracking-wide text-zinc-400 mb-1">
-                  {p.categoryLabel || p.category}
-                </div>
-              ) : null}
-              <p className="whitespace-pre-wrap text-zinc-100">{p.content}</p>
-            </li>
-          ))}
-        </ul>
+        posts.map(p => <PostCard key={p.id} post={p} />)
       )}
     </section>
   );

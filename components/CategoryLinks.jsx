@@ -1,37 +1,32 @@
 // components/CategoryLinks.jsx
 export const CATEGORIES = [
-  { slug: "confessions", label: "Confessions" },
-  { slug: "posts", label: "Posts" },
-  { slug: "product-reviews", label: "Product Reviews" },
-  { slug: "movie-reviews", label: "Movie Reviews" },
-  { slug: "place-reviews", label: "Place Reviews" },
-  { slug: "post-ideas", label: "Post Ideas" },
-  { slug: "post-ads", label: "Post Ads" },
-  { slug: "business-info", label: "Business Info" },
-  { slug: "sports", label: "Sports" },
-  { slug: "science", label: "Science" },
-  { slug: "automobile", label: "Automobile" },
-  { slug: "education", label: "Education" },
-  { slug: "anime", label: "Anime" },
-  { slug: "technology", label: "Technology" },
-  { slug: "travel", label: "Travel" },
-  { slug: "food", label: "Food" },
-  { slug: "health", label: "Health" },
-  { slug: "finance", label: "Finance" },
-  { slug: "fashion", label: "Fashion" },
-  // …keep your remaining categories if you have more
+  { name: 'Confessions' },
+  { name: 'Posts' },
+  { name: 'Product Reviews' },
+  { name: 'Movie Reviews' },
+  { name: 'Place Reviews' },
+  { name: 'Post Ideas' },
+  { name: 'Post Ads' },
+  { name: 'Business Info' },
+  { name: 'Sports' },
+  { name: 'Science' },
+  { name: 'Automobile' },
+  { name: 'Education' },
+  { name: 'Anime' },
+  { name: 'Technology' },
+  { name: 'Travel' },
+  { name: 'Food' },
+  { name: 'Health' },
+  { name: 'Finance' },
+  { name: 'Fashion' },
 ];
 
 export const STATIC_PAGES = [
-  { href: "/community", label: "Community" },
-  { href: "/faq", label: "FAQ" },
-  { href: "/rules", label: "Rules" },
-  { href: "/policy", label: "Policy" },
-  { href: "/privacy", label: "Privacy" },
-  { href: "/terms", label: "Terms" },
-  { href: "/trademark", label: "Trademark" },
+  { name: 'Community', href: '/community' },
+  { name: 'FAQ', href: '/faq' },
+  { name: 'Rules', href: '/rules' },
+  { name: 'Policy', href: '/policy' },
+  { name: 'Privacy', href: '/privacy' },
+  { name: 'Terms', href: '/terms' },
+  { name: 'Trademark', href: '/trademark' },
 ];
-
-export function getCategoryBySlug(slug) {
-  return CATEGORIES.find((c) => c.slug === slug) || null;
-}
