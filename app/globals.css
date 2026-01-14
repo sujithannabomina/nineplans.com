@@ -2,26 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
-:root { color-scheme: light; }
-html, body { height: 100%; }
-body { @apply bg-white text-black antialiased; }
-
-::selection { background: #000; color: #fff; }
-
-a { @apply text-black underline-offset-4 hover:underline; }
-
-.card { @apply rounded-2xl border border-black/10 bg-white shadow-soft; }
-
-.btn { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-black bg-black px-4 py-2 text-sm font-medium text-white hover:bg-black/90 active:translate-y-[1px] transition; }
-
-.btn-outline { @apply inline-flex items-center justify-center gap-2 rounded-xl border border-black/20 bg-white px-4 py-2 text-sm font-medium text-black hover:bg-black hover:text-white active:translate-y-[1px] transition; }
-
-.input { @apply w-full rounded-xl border border-black/15 bg-white px-3 py-2 text-sm outline-none focus:border-black/40; }
-
-.badge { @apply inline-flex items-center rounded-full border border-black/15 bg-white px-2 py-1 text-[11px] font-medium text-black; }
-
-.skeleton {
-  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 37%, rgba(0,0,0,0.04) 63%);
-  background-size: 1400px 100%;
-  animation: shimmer 1.6s linear infinite;
+@layer components {
+  .card {
+    @apply rounded-2xl border border-black/10 bg-white shadow-sm;
+  }
+  .btn {
+    @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition;
+  }
+  .btn-black {
+    @apply btn bg-black text-white hover:bg-black/90;
+  }
+  .btn-outline {
+    @apply btn border border-black/15 bg-white text-black hover:bg-black hover:text-white;
+  }
+  .linkRow {
+    @apply block rounded-xl px-3 py-2 hover:bg-black hover:text-white transition;
+  }
 }
