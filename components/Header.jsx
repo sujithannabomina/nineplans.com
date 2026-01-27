@@ -14,7 +14,6 @@ export default function Header({ query, onQueryChange }) {
   const { user, login, logout } = useAuth();
 
   const showSearch = useMemo(() => {
-    // show search only on main feeds (keep original behavior)
     if (!pathname) return true;
     return pathname === "/" || pathname.startsWith("/c/");
   }, [pathname]);
@@ -24,9 +23,7 @@ export default function Header({ query, onQueryChange }) {
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
         {/* Left: brand */}
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-3">
-            <Logo />
-          </Link>
+          <Logo />
         </div>
 
         {/* Middle: search */}

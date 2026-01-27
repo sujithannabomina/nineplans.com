@@ -3,9 +3,37 @@
 
 import useAuth from "@/hooks/useAuth";
 import Link from "next/link";
+import { useMemo } from "react";
+import { usePathname, useSearchParams } from "next/navigation";
 
 export default function RightRail() {
   const { user, login } = useAuth();
+  const pathname = usePathname();
+  const sp = useSearchParams();
+
+  // Keep UI consistent: determine active feed safely
+  const activeFeed = useMemo(() => {
+    // Default feed
+    let feed = sp?.get("feed") || "latest";
+
+    // On non-home/non-category pages, keep "Latest" visually selected (consistent)
+    // so RightRail doesn't look random across static pages.
+    const isFeedPage = pathname === "/" || (pathname || "").startsWith("/c/");
+    if (!isFeedPage) feed = "latest";
+
+    if (feed !== "trending" && feed !== "latest") feed = "latest";
+    return feed;
+  }, [sp, pathname]);
+
+  const trendingClass =
+    activeFeed === "trending"
+      ? "rounded-xl bg-black px-3 py-2 text-center text-sm text-white hover:bg-gray-900"
+      : "rounded-xl border px-3 py-2 text-center text-sm hover:bg-gray-50";
+
+  const latestClass =
+    activeFeed === "latest"
+      ? "rounded-xl bg-black px-3 py-2 text-center text-sm text-white hover:bg-gray-900"
+      : "rounded-xl border px-3 py-2 text-center text-sm hover:bg-gray-50";
 
   return (
     <div className="space-y-4">
@@ -31,14 +59,16 @@ export default function RightRail() {
           <div className="text-sm font-semibold">Feed</div>
           <div className="text-xs text-gray-500">controls</div>
         </div>
+
         <div className="mt-3 grid grid-cols-2 gap-2">
-          <Link href="/?feed=trending" className="rounded-xl border px-3 py-2 text-center text-sm hover:bg-gray-50">
+          <Link href="/?feed=trending" className={trendingClass}>
             Trending
           </Link>
-          <Link href="/?feed=latest" className="rounded-xl bg-black px-3 py-2 text-center text-sm text-white hover:bg-gray-900">
+          <Link href="/?feed=latest" className={latestClass}>
             Latest
           </Link>
         </div>
+
         <p className="mt-3 text-xs text-gray-500">
           Trending is simple in MVP. Next: engagement-based trending + personalization.
         </p>
@@ -68,7 +98,10 @@ export default function RightRail() {
         <p className="mt-2 text-xs text-gray-500">
           Ads are hidden for “under_review” posts (safer for AdSense).
         </p>
-        <Link href="/rules" className="mt-3 inline-block text-sm font-medium text-black hover:underline">
+        <Link
+          href="/rules"
+          className="mt-3 inline-block text-sm font-medium text-black hover:underline"
+        >
           Read full rules →
         </Link>
       </div>

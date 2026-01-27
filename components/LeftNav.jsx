@@ -2,20 +2,59 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { listenCategories } from "@/lib/firestore";
+
+const DEFAULT_CATEGORIES = [
+  { id: "confessions", slug: "confessions", name: "Confessions" },
+  { id: "posts", slug: "posts", name: "Posts" },
+  { id: "product-reviews", slug: "product-reviews", name: "Product Reviews" },
+  { id: "movie-reviews", slug: "movie-reviews", name: "Movie Reviews" },
+  { id: "place-reviews", slug: "place-reviews", name: "Place Reviews" },
+  { id: "post-ideas", slug: "post-ideas", name: "Post Ideas" },
+  { id: "post-ads", slug: "post-ads", name: "Post Ads" },
+  { id: "business-info", slug: "business-info", name: "Business Info" },
+  { id: "sports", slug: "sports", name: "Sports" },
+  { id: "science", slug: "science", name: "Science" },
+  { id: "automobile", slug: "automobile", name: "Automobile" },
+  { id: "education", slug: "education", name: "Education" },
+  { id: "anime", slug: "anime", name: "Anime" },
+  { id: "games", slug: "games", name: "Games" },
+  { id: "technology", slug: "technology", name: "Technology" },
+  { id: "health-fitness", slug: "health-fitness", name: "Health & Fitness" },
+  { id: "relationships", slug: "relationships", name: "Relationships" },
+  { id: "career-jobs", slug: "career-jobs", name: "Career & Jobs" },
+  { id: "finance", slug: "finance", name: "Finance" },
+  { id: "food-reviews", slug: "food-reviews", name: "Food Reviews" },
+  { id: "travel", slug: "travel", name: "Travel" },
+  { id: "photography-art", slug: "photography-art", name: "Photography & Art" },
+];
 
 export default function LeftNav() {
   const [cats, setCats] = useState([]);
-  const [catsLoaded, setCatsLoaded] = useState(false);
 
   useEffect(() => {
     const unsub = listenCategories((arr) => {
-      setCats(arr || []);
-      setCatsLoaded(true);
+      // If empty or not seeded, keep UI alive with defaults
+      if (!arr || arr.length === 0) {
+        setCats(DEFAULT_CATEGORIES);
+      } else {
+        setCats(arr);
+      }
     });
-    return () => unsub?.();
+
+    // Safety fallback (if listener fails silently)
+    const t = setTimeout(() => {
+      setCats((prev) => (prev?.length ? prev : DEFAULT_CATEGORIES));
+    }, 1200);
+
+    return () => {
+      clearTimeout(t);
+      unsub?.();
+    };
   }, []);
+
+  const list = useMemo(() => cats?.length ? cats : DEFAULT_CATEGORIES, [cats]);
 
   return (
     <div className="space-y-4">
@@ -58,23 +97,15 @@ export default function LeftNav() {
         </div>
 
         <div className="mt-3 max-h-[320px] space-y-1 overflow-auto pr-1">
-          {!catsLoaded ? (
-            <div className="text-sm text-gray-500">Loading categories…</div>
-          ) : cats?.length ? (
-            cats.map((c) => (
-              <Link
-                key={c.slug || c.id}
-                href={`/c/${c.slug || c.id}`}
-                className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-50"
-              >
-                {c.name}
-              </Link>
-            ))
-          ) : (
-            <div className="text-sm text-gray-500">
-              No categories found. Seed categories once and refresh.
-            </div>
-          )}
+          {list.map((c) => (
+            <Link
+              key={c.id || c.slug}
+              href={`/c/${c.slug}`}
+              className="block rounded-xl px-3 py-2 text-sm hover:bg-gray-50"
+            >
+              {c.name}
+            </Link>
+          ))}
         </div>
       </div>
 
@@ -116,28 +147,16 @@ export default function LeftNav() {
 
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="space-y-2 text-sm">
-          <Link
-            href="/faq"
-            className="block rounded-xl px-3 py-2 hover:bg-gray-50"
-          >
+          <Link href="/faq" className="block rounded-xl px-3 py-2 hover:bg-gray-50">
             FAQ
           </Link>
-          <Link
-            href="/rules"
-            className="block rounded-xl px-3 py-2 hover:bg-gray-50"
-          >
+          <Link href="/rules" className="block rounded-xl px-3 py-2 hover:bg-gray-50">
             Rules
           </Link>
-          <Link
-            href="/policy"
-            className="block rounded-xl px-3 py-2 hover:bg-gray-50"
-          >
+          <Link href="/policy" className="block rounded-xl px-3 py-2 hover:bg-gray-50">
             Policy
           </Link>
-          <Link
-            href="/contact"
-            className="block rounded-xl px-3 py-2 hover:bg-gray-50"
-          >
+          <Link href="/contact" className="block rounded-xl px-3 py-2 hover:bg-gray-50">
             Contact Us
           </Link>
         </div>

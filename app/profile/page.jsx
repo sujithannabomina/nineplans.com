@@ -1,8 +1,8 @@
+// app/profile/page.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Shell from "@/components/Shell";
 import useAuth from "@/hooks/useAuth";
 import { db } from "@/lib/db";
 import {
@@ -91,9 +91,7 @@ export default function ProfilePage() {
 
     const unsub = onSnapshot(
       qy,
-      (snap) => {
-        setMyPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
-      },
+      (snap) => setMyPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
       () => setMyPosts([])
     );
 
@@ -152,7 +150,7 @@ export default function ProfilePage() {
   }, [tab, myPosts, savedPosts, likedPosts]);
 
   return (
-    <Shell>
+    <>
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -185,7 +183,11 @@ export default function ProfilePage() {
             </div>
             {!phone ? (
               <div className="mt-1 text-xs text-gray-500">
-                Add phone in <Link className="underline" href="/profile/settings">Settings</Link>.
+                Add phone in{" "}
+                <Link className="underline" href="/profile/settings">
+                  Settings
+                </Link>
+                .
               </div>
             ) : null}
           </div>
@@ -202,7 +204,9 @@ export default function ProfilePage() {
           <button
             onClick={() => setTab("posts")}
             className={`rounded-xl px-3 py-2 text-sm border transition ${
-              tab === "posts" ? "bg-black text-white border-black" : "bg-white hover:bg-gray-50"
+              tab === "posts"
+                ? "bg-black text-white border-black"
+                : "bg-white hover:bg-gray-50"
             }`}
           >
             My Posts ({myPosts.length})
@@ -211,7 +215,9 @@ export default function ProfilePage() {
           <button
             onClick={() => setTab("saved")}
             className={`rounded-xl px-3 py-2 text-sm border transition ${
-              tab === "saved" ? "bg-black text-white border-black" : "bg-white hover:bg-gray-50"
+              tab === "saved"
+                ? "bg-black text-white border-black"
+                : "bg-white hover:bg-gray-50"
             }`}
           >
             Saved ({savedPosts.length})
@@ -220,7 +226,9 @@ export default function ProfilePage() {
           <button
             onClick={() => setTab("liked")}
             className={`rounded-xl px-3 py-2 text-sm border transition ${
-              tab === "liked" ? "bg-black text-white border-black" : "bg-white hover:bg-gray-50"
+              tab === "liked"
+                ? "bg-black text-white border-black"
+                : "bg-white hover:bg-gray-50"
             }`}
           >
             Liked ({likedPosts.length})
@@ -244,6 +252,6 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
-    </Shell>
+    </>
   );
 }
