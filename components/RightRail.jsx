@@ -7,17 +7,19 @@ import { useMemo } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 
 export default function RightRail() {
-  const { user, login } = useAuth();
+  // ✅ SAFE: avoid destructuring when useAuth() returns null during SSR/prerender
+  const auth = useAuth?.() || {};
+  const user = auth.user ?? null;
+  const login = auth.login ?? (() => {});
+
   const pathname = usePathname();
   const sp = useSearchParams();
 
   // Keep UI consistent: determine active feed safely
   const activeFeed = useMemo(() => {
-    // Default feed
     let feed = sp?.get("feed") || "latest";
 
-    // On non-home/non-category pages, keep "Latest" visually selected (consistent)
-    // so RightRail doesn't look random across static pages.
+    // On non-home/non-category pages, keep "Latest" selected (consistent across static pages)
     const isFeedPage = pathname === "/" || (pathname || "").startsWith("/c/");
     if (!isFeedPage) feed = "latest";
 
@@ -81,7 +83,6 @@ export default function RightRail() {
           This area is reserved for Google AdSense. (At least 50% of the right panel.)
         </p>
 
-        {/* This height enforces the requirement */}
         <div className="mt-3 flex h-[45vh] items-center justify-center rounded-xl border border-dashed text-xs text-gray-500">
           Google Ads (Reserved)
         </div>
@@ -98,10 +99,7 @@ export default function RightRail() {
         <p className="mt-2 text-xs text-gray-500">
           Ads are hidden for “under_review” posts (safer for AdSense).
         </p>
-        <Link
-          href="/rules"
-          className="mt-3 inline-block text-sm font-medium text-black hover:underline"
-        >
+        <Link href="/rules" className="mt-3 inline-block text-sm font-medium text-black hover:underline">
           Read full rules →
         </Link>
       </div>
