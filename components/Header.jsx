@@ -1,3 +1,4 @@
+// components/Header.jsx
 "use client";
 
 import { useMemo } from "react";
@@ -23,10 +24,9 @@ export default function Header({ query, onQueryChange }) {
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
         {/* Left: brand */}
         <div className="flex items-center gap-3">
-          <Logo />
-          <span className="hidden md:block text-xs text-neutral-500">
-            Post anonymous
-          </span>
+          <Link href="/" className="flex items-center gap-3">
+            <Logo />
+          </Link>
         </div>
 
         {/* Middle: search */}
