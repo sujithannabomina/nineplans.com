@@ -1,138 +1,131 @@
+// app/submit/page.jsx
 "use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import Shell from "@/components/Shell";
 import useAuth from "@/hooks/useAuth";
-import { createPost, listenTopCategories } from "@/lib/firestore";
+import { listenCategories, createPost } from "@/lib/firestore";
 
 export default function SubmitPage() {
-  const router = useRouter();
-  const { user, login } = useAuth();
-
-  const [tab, setTab] = useState("latest");
-  const [q, setQ] = useState("");
-
+  const { user, userDoc, login } = useAuth();
   const [cats, setCats] = useState([]);
-  const [categorySlug, setCategorySlug] = useState("");
+
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
-  const [tags, setTags] = useState("");
+  const [categorySlug, setCategorySlug] = useState("general-posts");
+  const [isAnonymous, setIsAnonymous] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState("");
 
   useEffect(() => {
-    const unsub = listenTopCategories((arr) => setCats(arr || []));
+    const unsub = listenCategories(setCats);
     return () => unsub?.();
   }, []);
 
-  useEffect(() => {
-    if (!categorySlug && cats[0]?.slug) setCategorySlug(cats[0].slug);
+  const selectedCat = useMemo(() => {
+    return cats.find((c) => c.slug === categorySlug) || null;
   }, [cats, categorySlug]);
 
-  const category = useMemo(
-    () => cats.find((c) => c.slug === categorySlug) || null,
-    [cats, categorySlug]
-  );
-
-  const submit = async () => {
+  async function submit() {
     if (!user) return login();
-    const t = title.trim();
-    const b = body.trim();
-    if (t.length < 5 || b.length < 10) return alert("Title (5+) and body (10+) required.");
     setBusy(true);
+    setMsg("");
     try {
-      const tagList = tags
-        .split(",")
-        .map((s) => s.trim())
-        .filter(Boolean)
-        .slice(0, 8);
-
       const id = await createPost({
+        uid: user.uid,
+        title,
+        body,
         categorySlug,
-        categoryName: category?.name || categorySlug,
-        title: t,
-        body: b,
-        tags: tagList,
-        authorUid: user.uid,
-        authorAlias: user.primaryAlias,
-        authorPhoto: user.photoURL,
+        categoryName: selectedCat?.name || "General Posts",
+        isAnonymous,
+        alias: userDoc?.alias || userDoc?.name || "User",
       });
-
-      router.push(`/post/${id}`);
+      setTitle("");
+      setBody("");
+      setMsg(`Posted successfully! (Post ID: ${id})`);
     } catch (e) {
-      alert(e?.message || "Failed to publish");
+      setMsg(e.message || "Failed to post");
     } finally {
       setBusy(false);
     }
-  };
+  }
 
   return (
-    <Shell q={q} setQ={setQ} tab={tab} setTab={setTab}>
-      <div className="space-y-4">
-        <div className="text-xl font-extrabold tracking-tight">Create a post</div>
+    <Shell>
+      <div className="rounded-2xl border bg-white p-5 shadow-sm">
+        <div className="text-lg font-semibold">Create a post</div>
+        <p className="mt-1 text-sm text-gray-600">
+          Post safely. By default, posts are anonymous (alias-first).
+        </p>
 
-        <div className="card p-5 space-y-3">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <div className="space-y-2">
-              <label className="text-xs font-semibold">Category</label>
-              <select
-                className="input"
-                value={categorySlug}
-                onChange={(e) => setCategorySlug(e.target.value)}
-              >
-                {cats.map((c) => (
-                  <option key={c.slug} value={c.slug}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-xs font-semibold">Tags (comma separated)</label>
-              <input
-                className="input"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-                placeholder="confession, advice, review"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <label className="text-xs font-semibold">Title</label>
+        <div className="mt-4 space-y-3">
+          <div>
+            <label className="text-sm font-medium">Title</label>
             <input
-              className="input"
+              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Write a clear title…"
+              placeholder="Short title"
             />
           </div>
 
-          <div className="space-y-2">
-            <label className="text-xs font-semibold">Body</label>
+          <div>
+            <label className="text-sm font-medium">Category</label>
+            <select
+              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
+              value={categorySlug}
+              onChange={(e) => setCategorySlug(e.target.value)}
+            >
+              {cats.map((c) => (
+                <option key={c.id} value={c.slug}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="text-sm font-medium">Post</label>
             <textarea
-              className="input min-h-[220px]"
+              className="mt-1 w-full rounded-xl border px-3 py-2 text-sm"
+              rows={8}
               value={body}
               onChange={(e) => setBody(e.target.value)}
-              placeholder="Tell your story… (alias-first)"
+              placeholder="Write your post here..."
             />
-            <div className="text-xs text-black/60">
-              Posting as{" "}
-              <span className="font-semibold text-black">
-                {user ? user.primaryAlias : "Guest"}
-              </span>
-            </div>
           </div>
 
-          <div className="flex items-center justify-end gap-2">
-            <button className="btn-outline" onClick={() => router.push("/")}>
-              Cancel
-            </button>
-            <button className="btn" onClick={submit} disabled={busy}>
-              {busy ? "Publishing…" : "Publish"}
+          <div className="flex items-center justify-between rounded-xl border bg-gray-50 px-3 py-2">
+            <div>
+              <div className="text-sm font-medium">Anonymous mode</div>
+              <div className="text-xs text-gray-600">
+                If ON, your post shows “Anonymous” publicly.
+              </div>
+            </div>
+            <button
+              onClick={() => setIsAnonymous((v) => !v)}
+              className={
+                "rounded-full px-3 py-1 text-sm " +
+                (isAnonymous ? "bg-black text-white" : "bg-white border")
+              }
+            >
+              {isAnonymous ? "ON" : "OFF"}
             </button>
           </div>
+
+          {!!msg && (
+            <div className="rounded-xl border bg-white px-3 py-2 text-sm">
+              {msg}
+            </div>
+          )}
+
+          <button
+            onClick={submit}
+            disabled={busy}
+            className="w-full rounded-xl bg-black px-4 py-2 text-sm text-white hover:bg-gray-900 disabled:opacity-60"
+          >
+            {busy ? "Posting…" : "Post"}
+          </button>
         </div>
       </div>
     </Shell>

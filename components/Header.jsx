@@ -1,57 +1,82 @@
 "use client";
 
-import React from "react";
+import { useMemo } from "react";
 import Link from "next/link";
-import Image from "next/image";
-import { Plus } from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { Plus, Search, User, LogOut } from "lucide-react";
+import Logo from "@/components/Logo";
 import useAuth from "@/hooks/useAuth";
 
-export default function Header() {
-  const { user, signInWithGoogle, signOutUser } = useAuth();
+export default function Header({ query, onQueryChange }) {
+  const pathname = usePathname();
+  const router = useRouter();
+  const { user, login, logout } = useAuth();
+
+  const showSearch = useMemo(() => {
+    // show search only on main feeds (keep original behavior)
+    if (!pathname) return true;
+    return pathname === "/" || pathname.startsWith("/c/");
+  }, [pathname]);
 
   return (
-    <header className="sticky top-0 z-50 bg-white/90 backdrop-blur border-b border-black/10">
-      <div className="mx-auto max-w-6xl px-3 py-3 flex items-center gap-4">
-        {/* Logo + Name + tagline */}
-        <Link href="/" className="flex items-center gap-3 min-w-[220px]">
-          <div className="h-10 w-10 rounded-full bg-black text-white flex items-center justify-center font-bold">
-            9
-          </div>
-          <div className="leading-tight">
-            <div className="text-base font-extrabold tracking-tight">NinePlans</div>
-            <div className="text-xs text-black/60">Post anonymous</div>
-          </div>
-        </Link>
+    <header className="sticky top-0 z-40 border-b border-neutral-200 bg-white/90 backdrop-blur">
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3">
+        {/* Left: brand */}
+        <div className="flex items-center gap-3">
+          <Logo />
+          <span className="hidden md:block text-xs text-neutral-500">
+            Post anonymous
+          </span>
+        </div>
 
-        {/* Header links (as per sketch) */}
-        <nav className="hidden md:flex items-center gap-4 text-sm font-semibold text-black/70">
-          <Link className="hover:text-black" href="/">Home</Link>
-          <Link className="hover:text-black" href="/rules">Rules</Link>
-          <Link className="hover:text-black" href="/policy">Policy</Link>
-          <Link className="hover:text-black" href="/faq">FAQ</Link>
-          <Link className="hover:text-black" href="/contact">Contact</Link>
-        </nav>
+        {/* Middle: search */}
+        <div className="flex-1">
+          {showSearch ? (
+            <div className="relative">
+              <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-neutral-400" />
+              <input
+                value={query ?? ""}
+                onChange={(e) => onQueryChange?.(e.target.value)}
+                placeholder="Search posts, categories, tags..."
+                className="w-full rounded-full border border-neutral-200 bg-white px-10 py-2 text-sm outline-none ring-0 focus:border-neutral-300"
+              />
+            </div>
+          ) : null}
+        </div>
 
-        <div className="ml-auto flex items-center gap-2">
-          <Link
-            href="/submit"
-            className="btn btn-outline flex items-center gap-2"
+        {/* Right: actions */}
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => router.push("/submit")}
+            className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-50"
           >
             <Plus className="h-4 w-4" />
-            Create
-          </Link>
+            <span className="hidden sm:inline">Create</span>
+          </button>
 
           {user ? (
             <>
-              <Link href="/profile" className="btn btn-outline">
-                Profile
+              <Link
+                href="/profile"
+                className="inline-flex items-center gap-2 rounded-full border border-neutral-200 bg-white px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-50"
+              >
+                <User className="h-4 w-4" />
+                <span className="hidden sm:inline">Profile</span>
               </Link>
-              <button onClick={signOutUser} className="btn btn-black">
-                Logout
+
+              <button
+                onClick={logout}
+                className="inline-flex items-center gap-2 rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+              >
+                <LogOut className="h-4 w-4" />
+                <span className="hidden sm:inline">Logout</span>
               </button>
             </>
           ) : (
-            <button onClick={signInWithGoogle} className="btn btn-black">
+            <button
+              onClick={login}
+              className="inline-flex items-center rounded-full bg-black px-4 py-2 text-sm font-semibold text-white hover:opacity-90"
+            >
               Continue with Google
             </button>
           )}

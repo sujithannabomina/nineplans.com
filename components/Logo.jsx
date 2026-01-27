@@ -1,15 +1,30 @@
-import React from "react";
+import Image from "next/image";
+import Link from "next/link";
 
 export default function Logo() {
   return (
-    <div className="flex items-center gap-2 select-none">
-      <div className="h-8 w-8 rounded-2xl border border-black bg-black text-white flex items-center justify-center font-black">
-        9
-      </div>
-      <div className="leading-tight">
-        <div className="text-sm font-extrabold tracking-tight">NinePlans</div>
-        <div className="text-[10px] text-black/60 -mt-0.5">anonymous community</div>
-      </div>
-    </div>
+    <Link href="/" className="flex items-center gap-3">
+      {/* Round mark */}
+      <Image
+        src="/logo-mark.png"
+        alt="NinePlans logo"
+        width={36}
+        height={36}
+        priority
+        className="h-9 w-9 rounded-full border border-neutral-200 bg-white object-cover"
+      />
+
+      {/* Wordmark (hide on very small screens) */}
+      <Image
+        src="/logo-full.png"
+        alt="NinePlans"
+        width={180}
+        height={36}
+        priority
+        className="hidden sm:block h-6 w-auto object-contain"
+      />
+
+      <span className="sr-only">NinePlans</span>
+    </Link>
   );
 }

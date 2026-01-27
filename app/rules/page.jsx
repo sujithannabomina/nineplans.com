@@ -1,18 +1,48 @@
-export default function Page() {
-  return (
-    <div className="min-h-screen">
-      <div className="mx-auto max-w-3xl px-5 py-10">
-        <div className="card p-8">
-          <div className="text-2xl font-extrabold tracking-tight">Community Rules</div>
-          <div className="text-sm text-black/70 mt-3 whitespace-pre-wrap">1) No hate/harassment
-2) No doxxing/personal info
-3) No spam/scams
-4) Report violations
+// app/rules/page.jsx
+import Shell from "@/components/Shell";
 
-Moderation is active.</div>
-          <a href="/" className="btn mt-6 inline-flex no-underline">Go home</a>
-        </div>
+export default function RulesPage() {
+  return (
+    <Shell>
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-semibold">Rules</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          Rules exist to protect users and keep NinePlans safe, readable, and advertiser-friendly.
+        </p>
+
+        <h2 className="mt-6 text-lg font-semibold">Posting Rules</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+          <li>Be respectful. No harassment, hate, or threats.</li>
+          <li>No doxxing. Never share private information.</li>
+          <li>No spam/scams. Promotions must be honest and relevant.</li>
+          <li>Use correct categories so posts reach the right audience.</li>
+          <li>Illegal content is removed immediately.</li>
+        </ul>
+
+        <h2 className="mt-6 text-lg font-semibold">Anonymous Posting</h2>
+        <p className="mt-2 text-sm text-gray-700">
+          Anonymous posts show “Anonymous” publicly. Your account can still be moderated if rules are violated.
+          Anonymous is for privacy, not for abuse.
+        </p>
+
+        <h2 className="mt-6 text-lg font-semibold">Reports & Enforcement</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+          <li>Reported posts can move to “Under Review”.</li>
+          <li>Repeated violations may limit posting, commenting, or reporting abilities.</li>
+          <li>Serious violations may lead to removal and account restriction.</li>
+        </ul>
+
+        <h2 className="mt-6 text-lg font-semibold">Commenting Rules</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+          <li>Debate the idea, not the person.</li>
+          <li>No harassment or targeted abuse.</li>
+          <li>No misleading links or phishing attempts.</li>
+        </ul>
+
+        <p className="mt-6 text-xs text-gray-500">
+          Moderation decisions are made to protect the community and platform safety.
+        </p>
       </div>
-    </div>
+    </Shell>
   );
 }

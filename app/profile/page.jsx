@@ -1,82 +1,110 @@
+// app/profile/page.jsx
 "use client";
 
-import React, { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Shell from "@/components/Shell";
 import useAuth from "@/hooks/useAuth";
-import { getUserProfile } from "@/lib/profile";
-import CompleteProfileModal from "@/components/CompleteProfileModal";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { listenMyActivity, listenPost } from "@/lib/firestore";
 
-export default function ProfilePage() {
-  const { user, loadingAuth, signInWithGoogle } = useAuth();
-  const [profile, setProfile] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [needsComplete, setNeedsComplete] = useState(false);
-
-  async function load() {
-    if (!user) return;
-    setLoading(true);
-    const p = await getUserProfile(user.uid);
-    setProfile(p || null);
-    setNeedsComplete(!p?.phone || !p?.name);
-    setLoading(false);
-  }
+function MiniPost({ postId }) {
+  const [post, setPost] = useState(null);
 
   useEffect(() => {
-    if (user) load();
-    else setLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+    const unsub = listenPost(postId, setPost);
+    return () => unsub?.();
+  }, [postId]);
 
-  if (loadingAuth) return null;
+  if (!post) return null;
 
   return (
-    <Shell>
-      {!user ? (
-        <div className="card p-6">
-          <div className="text-lg font-extrabold">Profile</div>
-          <div className="text-sm text-black/60 mt-1">Sign in to view your profile.</div>
-          <button onClick={signInWithGoogle} className="btn btn-black mt-4">
+    <Link href={`/post/${postId}`} className="block rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition">
+      <div className="text-base font-semibold">{post.title}</div>
+      <div className="mt-1 text-sm text-gray-600 line-clamp-2">{post.body}</div>
+      <div className="mt-3 text-xs text-gray-500">
+        {post.isAnonymous ? "Anonymous post" : "Regular post"} • {post.categoryName || "General Posts"}
+      </div>
+    </Link>
+  );
+}
+
+export default function ProfilePage() {
+  const { user, userDoc, loading, login } = useAuth();
+  const sp = useSearchParams();
+  const tab = sp.get("tab") || "liked";
+
+  const [items, setItems] = useState([]);
+
+  useEffect(() => {
+    if (!user?.uid) return;
+    const unsub = listenMyActivity(user.uid, tab, setItems);
+    return () => unsub?.();
+  }, [user?.uid, tab]);
+
+  const tabs = useMemo(() => ([
+    { key: "liked", label: "Liked" },
+    { key: "saved", label: "Saved" },
+    { key: "comment", label: "Commented" },
+    { key: "share", label: "Shared" },
+  ]), []);
+
+  if (loading) {
+    return <Shell><div className="rounded-2xl border bg-white p-6 shadow-sm">Loading…</div></Shell>;
+  }
+
+  if (!user) {
+    return (
+      <Shell>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <div className="text-lg font-semibold">Profile</div>
+          <p className="mt-1 text-sm text-gray-600">Sign in to view your profile activity.</p>
+          <button onClick={login} className="mt-4 rounded-xl bg-black px-4 py-2 text-sm text-white hover:bg-gray-900">
             Continue with Google
           </button>
         </div>
-      ) : loading ? (
-        <div className="card p-6">Loading profile…</div>
-      ) : (
-        <div className="space-y-3">
-          <div className="card p-6">
-            <div className="text-lg font-extrabold">Your Profile</div>
-            <div className="text-sm text-black/60 mt-1">Basic info we store for your account.</div>
+      </Shell>
+    );
+  }
 
-            <div className="mt-4 grid gap-3">
-              <div className="rounded-xl border border-black/10 p-3">
-                <div className="text-xs font-semibold text-black/60">Name</div>
-                <div className="text-sm font-bold">{profile?.name || "-"}</div>
-              </div>
-
-              <div className="rounded-xl border border-black/10 p-3">
-                <div className="text-xs font-semibold text-black/60">Phone</div>
-                <div className="text-sm font-bold">{profile?.phone || "-"}</div>
-              </div>
-
-              <div className="rounded-xl border border-black/10 p-3">
-                <div className="text-xs font-semibold text-black/60">Email</div>
-                <div className="text-sm font-bold">{profile?.email || user.email || "-"}</div>
-              </div>
+  return (
+    <Shell>
+      <div className="rounded-2xl border bg-white p-5 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <div className="text-lg font-semibold">
+              {userDoc?.alias || userDoc?.name || "User"}
+            </div>
+            <div className="mt-1 text-sm text-gray-600">
+              Email: <span className="font-medium">{userDoc?.email || user.email}</span>
+            </div>
+            <div className="mt-1 text-sm text-gray-600">
+              Phone: <span className="font-medium">{userDoc?.phone || "Not set"}</span>
             </div>
           </div>
-        </div>
-      )}
 
-      {user && needsComplete ? (
-        <CompleteProfileModal
-          uid={user.uid}
-          initialName={user.displayName || ""}
-          initialEmail={user.email || ""}
-          onDone={async () => {
-            await load();
-          }}
-        />
-      ) : null}
+          <Link href="/profile/settings" className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50">
+            Settings
+          </Link>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          <Link href="/profile?tab=like" className="rounded-full border px-3 py-2 text-sm hover:bg-gray-50">Liked</Link>
+          <Link href="/profile?tab=save" className="rounded-full border px-3 py-2 text-sm hover:bg-gray-50">Saved</Link>
+          <Link href="/profile?tab=comment" className="rounded-full border px-3 py-2 text-sm hover:bg-gray-50">Commented</Link>
+          <Link href="/profile?tab=share" className="rounded-full border px-3 py-2 text-sm hover:bg-gray-50">Shared</Link>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-4">
+        {items?.length ? (
+          items.map((it) => <MiniPost key={it.id} postId={it.postId} />)
+        ) : (
+          <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
+            No activity yet in this section.
+          </div>
+        )}
+      </div>
     </Shell>
   );
 }

@@ -1,19 +1,27 @@
+// components/Shell.jsx
 "use client";
 
-import React from "react";
 import Header from "@/components/Header";
 import LeftNav from "@/components/LeftNav";
 import RightRail from "@/components/RightRail";
 
-export default function Shell({ children, tab = "latest", setTab }) {
+export default function Shell({ children }) {
   return (
-    <div>
+    <div className="min-h-screen bg-gray-50 text-gray-900">
       <Header />
-      <main className="mx-auto max-w-6xl px-3 py-6 flex gap-6">
-        <LeftNav tab={tab} />
-        <section className="flex-1 min-w-0">{children}</section>
-        <RightRail tab={tab} setTab={setTab} />
-      </main>
+      <div className="mx-auto max-w-7xl px-4 pb-10">
+        <div className="grid grid-cols-1 gap-6 pt-6 lg:grid-cols-12">
+          <aside className="lg:col-span-3">
+            <LeftNav />
+          </aside>
+
+          <main className="lg:col-span-6">{children}</main>
+
+          <aside className="lg:col-span-3">
+            <RightRail />
+          </aside>
+        </div>
+      </div>
     </div>
   );
 }

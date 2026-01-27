@@ -1,0 +1,33 @@
+// app/contact/page.jsx
+import Shell from "@/components/Shell";
+import { SUPPORT_EMAIL } from "@/lib/constants";
+
+export default function ContactPage() {
+  return (
+    <Shell>
+      <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <h1 className="text-2xl font-semibold">Contact Us</h1>
+        <p className="mt-2 text-sm text-gray-600">
+          We respond as quickly as possible. For faster help, include links (post URL) and clear details.
+        </p>
+
+        <h2 className="mt-6 text-lg font-semibold">Support</h2>
+        <p className="mt-2 text-sm text-gray-700">
+          Email: <b>{SUPPORT_EMAIL}</b>
+        </p>
+
+        <h2 className="mt-6 text-lg font-semibold">Reporting Issues</h2>
+        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
+          <li>Include the post link (URL) if reporting a specific post.</li>
+          <li>Explain what happened and what you expected.</li>
+          <li>Attach screenshots only if needed.</li>
+        </ul>
+
+        <h2 className="mt-6 text-lg font-semibold">Business / Advertising</h2>
+        <p className="mt-2 text-sm text-gray-700">
+          For AdSense and partnership topics, email support with subject: <b>“Business Inquiry”</b>.
+        </p>
+      </div>
+    </Shell>
+  );
+}

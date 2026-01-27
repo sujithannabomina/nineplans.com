@@ -1,46 +1,61 @@
-'use client';
+// app/providers.jsx
+"use client";
 
 import React, { createContext, useEffect, useMemo, useState } from "react";
-import { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  onAuthStateChanged,
+  signInWithPopup,
+  signOut,
+} from "firebase/auth";
 import { auth } from "@/lib/db";
-import { ensureUserDoc, fetchUserDoc } from "@/lib/firestore";
+import { ensureUserDoc, fetchUserDoc, seedDefaultCategoriesIfEmpty } from "@/lib/firestore";
 
 export const AuthContext = createContext(null);
 
 export default function Providers({ children }) {
-  const [firebaseUid, setFirebaseUid] = useState(null);
-  const [user, setUser] = useState(null); // user doc
+  const [user, setUser] = useState(null);
+  const [userDoc, setUserDoc] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  async function login() {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  }
+
+  async function logout() {
+    await signOut(auth);
+  }
+
   useEffect(() => {
-    return onAuthStateChanged(auth, async (fbUser) => {
-      setLoading(true);
-      try {
-        if (!fbUser) {
-          setFirebaseUid(null);
-          setUser(null);
-          setLoading(false);
-          return;
-        }
-        setFirebaseUid(fbUser.uid);
-        await ensureUserDoc(fbUser);
-        const doc = await fetchUserDoc(fbUser.uid);
-        setUser(doc);
-      } finally {
-        setLoading(false);
+    // Make sure categories exist (so sidebar never stays empty)
+    seedDefaultCategoriesIfEmpty().catch(() => {});
+
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      setUser(u || null);
+      if (u?.uid) {
+        await ensureUserDoc(u).catch(() => {});
+        const docData = await fetchUserDoc(u.uid).catch(() => null);
+        setUserDoc(docData);
+      } else {
+        setUserDoc(null);
       }
+      setLoading(false);
     });
+
+    return () => unsub();
   }, []);
 
-  const login = async () => {
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-    await signInWithPopup(auth, provider);
-  };
-
-  const logout = async () => { await signOut(auth); };
-
-  const value = useMemo(() => ({ user, firebaseUid, loading, login, logout }), [user, firebaseUid, loading]);
+  const value = useMemo(
+    () => ({
+      user,
+      userDoc,
+      loading,
+      login,
+      logout,
+    }),
+    [user, userDoc, loading]
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

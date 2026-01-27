@@ -1,69 +1,47 @@
-'use client';
+// app/c/[slug]/page.jsx
+"use client";
 
-import React, { useEffect, useMemo, useState } from "react";
-import { useParams } from "next/navigation";
-import { doc, onSnapshot } from "firebase/firestore";
-import { db } from "@/lib/db";
+import { useEffect, useState } from "react";
 import Shell from "@/components/Shell";
-import PostCard from "@/components/PostCard";
 import { listenFeed } from "@/lib/firestore";
+import Link from "next/link";
 
-export default function CategoryPage() {
-  const { slug } = useParams();
-  const [tab, setTab] = useState("latest");
-  const [q, setQ] = useState("");
-  const [cat, setCat] = useState(null);
+function PostCard({ post }) {
+  return (
+    <Link
+      href={`/post/${post.id}`}
+      className="block rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition"
+    >
+      <div className="text-base font-semibold">{post.title}</div>
+      <div className="mt-1 text-sm text-gray-600 line-clamp-3">{post.body}</div>
+      <div className="mt-3 flex items-center justify-between text-xs text-gray-500">
+        <span>{post.isAnonymous ? "Anonymous" : (post.authorAlias || "User")}</span>
+        <span>👍 {post.upvotes || 0} • 💬 {post.commentsCount || 0}</span>
+      </div>
+    </Link>
+  );
+}
+
+export default function CategoryPage({ params }) {
+  const slug = params?.slug;
   const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const ref = doc(db, "categories", slug);
-    return onSnapshot(ref, (snap) => setCat(snap.exists() ? snap.data() : null));
+    const unsub = listenFeed({ mode: "latest", categorySlug: slug }, setPosts);
+    return () => unsub?.();
   }, [slug]);
 
-  useEffect(() => {
-    setLoading(true);
-    const sort = tab === "top" ? "top" : "latest";
-    const unsub = listenFeed({
-      categorySlug: slug,
-      sort,
-      cb: (p) => { setPosts(p); setLoading(false); },
-    });
-    return () => unsub();
-  }, [slug, tab]);
-
-  const filtered = useMemo(() => {
-    const s = q.trim().toLowerCase();
-    if (!s) return posts;
-    return posts.filter((p) => (p.title + " " + p.body + " " + (p.tags || []).join(" ")).toLowerCase().includes(s));
-  }, [posts, q]);
-
   return (
-    <Shell q={q} setQ={setQ} tab={tab} setTab={setTab}>
-      <div className="space-y-4">
-        <div className="card p-5">
-          <div className="text-xs text-black/60">Category</div>
-          <div className="text-2xl font-extrabold tracking-tight mt-1">{cat ? cat.name : `c/${slug}`}</div>
-          <div className="text-sm text-black/70 mt-1">{cat?.description || "Loading…"}</div>
-          {cat?.rules?.length ? (
-            <ul className="mt-3 text-xs text-black/60 list-disc pl-5 space-y-1">
-              {cat.rules.slice(0, 4).map((r) => <li key={r}>{r}</li>)}
-            </ul>
-          ) : null}
-        </div>
+    <Shell>
+      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="text-lg font-semibold">Category</div>
+        <div className="text-sm text-gray-600">Showing posts in: <span className="font-medium">{slug}</span></div>
+      </div>
 
-        {loading ? (
-          <div className="space-y-3">
-            {Array.from({ length: 5 }).map((_, i) => <div key={i} className="card p-4 h-28 skeleton" />)}
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="card p-6">
-            <div className="text-sm font-semibold">No posts yet</div>
-            <div className="text-sm text-black/60 mt-1">Be the first to post in this category.</div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {filtered.map((p) => <PostCard key={p.id} post={p} />)}
+      <div className="mt-4 space-y-4">
+        {posts?.length ? posts.map((p) => <PostCard key={p.id} post={p} />) : (
+          <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
+            No posts yet in this category.
           </div>
         )}
       </div>
