@@ -11,9 +11,15 @@ import useAuth from "@/hooks/useAuth";
 export default function Header({ query, onQueryChange }) {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, login, logout } = useAuth();
+
+  // ✅ SAFE: avoid destructuring when useAuth() returns null during SSR/prerender
+  const auth = useAuth?.() || {};
+  const user = auth.user ?? null;
+  const login = auth.login ?? (() => {});
+  const logout = auth.logout ?? (() => {});
 
   const showSearch = useMemo(() => {
+    // show search only on main feeds (keep original behavior)
     if (!pathname) return true;
     return pathname === "/" || pathname.startsWith("/c/");
   }, [pathname]);
@@ -24,6 +30,9 @@ export default function Header({ query, onQueryChange }) {
         {/* Left: brand */}
         <div className="flex items-center gap-3">
           <Logo />
+          <span className="hidden md:block text-xs text-neutral-500">
+            Post anonymous
+          </span>
         </div>
 
         {/* Middle: search */}
