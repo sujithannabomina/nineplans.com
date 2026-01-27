@@ -3,6 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import Shell from "@/components/Shell";
 import useAuth from "@/hooks/useAuth";
 import { db } from "@/lib/db";
 import {
@@ -71,7 +72,11 @@ async function hydratePostsByIds(ids) {
 }
 
 export default function ProfilePage() {
-  const { user, userDoc, loading } = useAuth();
+  // ✅ SAFE: avoid destructuring when useAuth() returns null during prerender/export
+  const auth = useAuth?.() || {};
+  const user = auth.user ?? null;
+  const userDoc = auth.userDoc ?? null;
+  const loading = auth.loading ?? false;
 
   const [tab, setTab] = useState("posts"); // posts | saved | liked
   const [myPosts, setMyPosts] = useState([]);
@@ -91,7 +96,9 @@ export default function ProfilePage() {
 
     const unsub = onSnapshot(
       qy,
-      (snap) => setMyPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() }))),
+      (snap) => {
+        setMyPosts(snap.docs.map((d) => ({ id: d.id, ...d.data() })));
+      },
       () => setMyPosts([])
     );
 
@@ -150,7 +157,7 @@ export default function ProfilePage() {
   }, [tab, myPosts, savedPosts, likedPosts]);
 
   return (
-    <>
+    <Shell>
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -239,7 +246,11 @@ export default function ProfilePage() {
       <div className="mt-4 space-y-4">
         {!user ? (
           <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
-            Please <Link className="underline" href="/login">login</Link> to view your profile.
+            Please{" "}
+            <Link className="underline" href="/login">
+              login
+            </Link>{" "}
+            to view your profile.
           </div>
         ) : activeList?.length ? (
           activeList.map((p) => <PostCard key={p.id} post={p} />)
@@ -247,11 +258,12 @@ export default function ProfilePage() {
           <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
             Nothing here yet.
             <div className="text-xs text-gray-500 mt-1">
-              Create a post from the Home page, or save/like posts to see them here.
+              Create a post from the Home page, or save/like posts to see them
+              here.
             </div>
           </div>
         )}
       </div>
-    </>
+    </Shell>
   );
 }
