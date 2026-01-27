@@ -1,104 +1,95 @@
 // app/admin/page.jsx
 "use client";
 
-import { useEffect, useState } from "react";
 import Shell from "@/components/Shell";
+import Link from "next/link";
 import useAuth from "@/hooks/useAuth";
-import { adminSetPostStatus, closeReport, listOpenReports, listenPost } from "@/lib/firestore";
-import { POST_STATUS } from "@/lib/constants";
-
-function ReportRow({ rep }) {
-  const [post, setPost] = useState(null);
-
-  useEffect(() => {
-    const unsub = listenPost(rep.postId, setPost);
-    return () => unsub?.();
-  }, [rep.postId]);
-
-  return (
-    <div className="rounded-2xl border bg-white p-4 shadow-sm">
-      <div className="text-sm font-semibold">Report: {rep.reason}</div>
-      <div className="mt-1 text-xs text-gray-600">Post ID: {rep.postId}</div>
-
-      {post ? (
-        <div className="mt-3 rounded-xl border bg-gray-50 p-3">
-          <div className="text-sm font-semibold">{post.title}</div>
-          <div className="mt-1 text-sm text-gray-700 line-clamp-2">{post.body}</div>
-          <div className="mt-2 text-xs text-gray-500">
-            Status: <span className="font-medium">{post.status}</span>
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              onClick={() => adminSetPostStatus(rep.postId, POST_STATUS.ACTIVE)}
-              className="rounded-xl border px-3 py-2 text-sm hover:bg-gray-50"
-            >
-              Mark Active
-            </button>
-            <button
-              onClick={() => adminSetPostStatus(rep.postId, POST_STATUS.UNDER_REVIEW)}
-              className="rounded-xl border px-3 py-2 text-sm hover:bg-gray-50"
-            >
-              Under Review
-            </button>
-            <button
-              onClick={() => adminSetPostStatus(rep.postId, POST_STATUS.REMOVED)}
-              className="rounded-xl bg-black px-3 py-2 text-sm text-white hover:bg-gray-900"
-            >
-              Remove
-            </button>
-            <button
-              onClick={() => closeReport(rep.id)}
-              className="ml-auto rounded-xl border px-3 py-2 text-sm hover:bg-gray-50"
-            >
-              Close Report
-            </button>
-          </div>
-        </div>
-      ) : (
-        <div className="mt-3 text-sm text-gray-600">Loading post…</div>
-      )}
-    </div>
-  );
-}
 
 export default function AdminPage() {
-  const { user, loading, login } = useAuth();
-  const [reports, setReports] = useState([]);
+  // ✅ SAFE: avoid destructuring when useAuth() returns null during SSR/prerender
+  const auth = useAuth?.() || {};
+  const user = auth.user ?? null;
+  const userDoc = auth.userDoc ?? null;
+  const loading = auth.loading ?? false;
 
-  useEffect(() => {
-    const unsub = listOpenReports(setReports);
-    return () => unsub?.();
-  }, []);
+  // Basic admin check (keep it simple + non-breaking)
+  const isAdmin =
+    userDoc?.role === "admin" ||
+    userDoc?.isAdmin === true ||
+    user?.email === "admin@nineplans.com"; // optional fallback if you use a fixed admin email
 
   return (
     <Shell>
-      {loading ? (
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">Loading…</div>
-      ) : !user ? (
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          <div className="text-lg font-semibold">Admin</div>
-          <p className="mt-1 text-sm text-gray-600">Sign in to view moderation reports.</p>
-          <button onClick={login} className="mt-4 rounded-xl bg-black px-4 py-2 text-sm text-white hover:bg-gray-900">
-            Continue with Google
-          </button>
+      <div className="rounded-2xl border bg-white p-4 shadow-sm">
+        <div className="text-lg font-semibold">Admin</div>
+        <div className="mt-1 text-sm text-gray-600">
+          Admin tools and moderation dashboard.
         </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="rounded-2xl border bg-white p-5 shadow-sm">
-            <div className="text-lg font-semibold">Admin Moderation</div>
-            <p className="mt-1 text-sm text-gray-600">
-              Review reports and set post status. Removed posts won’t show in feed.
-            </p>
-          </div>
+      </div>
 
-          {reports?.length ? reports.map((r) => <ReportRow key={r.id} rep={r} />) : (
-            <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
-              No open reports right now.
+      <div className="mt-4 rounded-2xl border bg-white p-6 text-sm text-gray-700 shadow-sm">
+        {loading ? (
+          <div>
+            Loading…
+            <div className="mt-1 text-xs text-gray-500">
+              Checking your access.
             </div>
-          )}
-        </div>
-      )}
+          </div>
+        ) : !user ? (
+          <div>
+            Please{" "}
+            <Link className="underline" href="/login">
+              login
+            </Link>{" "}
+            to access admin.
+          </div>
+        ) : !isAdmin ? (
+          <div>
+            You don’t have access to this page.
+            <div className="mt-2 text-xs text-gray-500">
+              If you believe this is a mistake, contact support.
+            </div>
+          </div>
+        ) : (
+          <div className="space-y-3">
+            <div className="text-sm font-semibold text-gray-900">
+              Welcome, Admin.
+            </div>
+
+            <div className="text-sm text-gray-600">
+              Add your moderation tools here (reports, removals, category edits,
+              etc.) without changing the existing UI layout.
+            </div>
+
+            <div className="flex flex-wrap gap-2 pt-2">
+              <Link
+                href="/"
+                className="rounded-xl border bg-white px-3 py-2 text-sm hover:bg-gray-50"
+              >
+                Go Home
+              </Link>
+              <Link
+                href="/profile"
+                className="rounded-xl border bg-white px-3 py-2 text-sm hover:bg-gray-50"
+              >
+                Profile
+              </Link>
+              <Link
+                href="/rules"
+                className="rounded-xl border bg-white px-3 py-2 text-sm hover:bg-gray-50"
+              >
+                Rules
+              </Link>
+              <Link
+                href="/policy"
+                className="rounded-xl border bg-white px-3 py-2 text-sm hover:bg-gray-50"
+              >
+                Policy
+              </Link>
+            </div>
+          </div>
+        )}
+      </div>
     </Shell>
   );
 }
