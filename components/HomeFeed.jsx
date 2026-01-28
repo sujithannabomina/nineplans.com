@@ -45,16 +45,30 @@ function PostCard({ post }) {
 
 export default function HomeFeed({ feed = "latest" }) {
   const [posts, setPosts] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const mode = feed === "trending" ? "trending" : "latest";
-    const unsub = listenFeed({ mode }, setPosts);
+
+    // reset state when feed changes (prevents old list “sticking”)
+    setPosts([]);
+    setLoading(true);
+
+    let first = true;
+
+    const unsub = listenFeed({ mode }, (list) => {
+      setPosts(Array.isArray(list) ? list : []);
+      if (first) {
+        first = false;
+        setLoading(false);
+      }
+    });
+
     return () => unsub?.();
   }, [feed]);
 
   const title = useMemo(() => {
-    if (feed === "trending") return "Trending";
-    return "Latest";
+    return feed === "trending" ? "Trending" : "Latest";
   }, [feed]);
 
   return (
@@ -77,12 +91,19 @@ export default function HomeFeed({ feed = "latest" }) {
       </div>
 
       <div className="mt-4 space-y-4">
-        {posts?.length ? (
-          posts.map((p) => <PostCard key={p.id} post={p} />)
-        ) : (
+        {loading ? (
           <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
             Loading…{" "}
             <div className="text-xs text-gray-500">Fetching fresh posts.</div>
+          </div>
+        ) : posts?.length ? (
+          posts.map((p) => <PostCard key={p.id} post={p} />)
+        ) : (
+          <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
+            No posts yet.
+            <div className="text-xs text-gray-500 mt-1">
+              Be the first to create one.
+            </div>
           </div>
         )}
       </div>

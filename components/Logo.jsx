@@ -1,22 +1,33 @@
 // components/Logo.jsx
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
 
 export default function Logo() {
   return (
-    <Link href="/" className="flex items-center gap-3">
-      <Image
-        src="/logo-mark.png"
-        alt="NinePlans"
-        width={36}
-        height={36}
-        priority
-        className="h-9 w-9 rounded-full border border-neutral-200 bg-white object-cover"
-      />
-      <span className="hidden sm:block text-base font-semibold tracking-tight">
-        NinePlans
+    <Link href="/" className="flex items-center gap-2">
+      {/* Mobile: mark only */}
+      <span className="inline-flex md:hidden">
+        <Image
+          src="/logo-mark.png"
+          alt="NinePlans"
+          width={34}
+          height={34}
+          priority
+        />
       </span>
-      <span className="sr-only">NinePlans</span>
+
+      {/* Desktop: single logo (full) */}
+      <span className="hidden md:inline-flex">
+        <Image
+          src="/logo-full.png"
+          alt="NinePlans"
+          width={42}
+          height={42}
+          priority
+        />
+      </span>
     </Link>
   );
 }
