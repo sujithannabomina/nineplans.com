@@ -3,7 +3,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import Shell from "@/components/Shell";
+import { useRouter } from "next/navigation";
 import useAuth from "@/hooks/useAuth";
 import { db } from "@/lib/db";
 import {
@@ -71,17 +71,44 @@ async function hydratePostsByIds(ids) {
   return docs.filter(Boolean);
 }
 
-export default function ProfilePage() {
-  // ✅ SAFE: avoid destructuring when useAuth() returns null during prerender/export
-  const auth = useAuth?.() || {};
-  const user = auth.user ?? null;
-  const userDoc = auth.userDoc ?? null;
-  const loading = auth.loading ?? false;
+function safeTabFromUrl() {
+  if (typeof window === "undefined") return "posts";
+  const sp = new URLSearchParams(window.location.search);
+  const t = (sp.get("tab") || "").toLowerCase().trim();
+  const allowed = ["posts", "saved", "liked", "commented", "shared", "viewed"];
+  return allowed.includes(t) ? t : "posts";
+}
 
-  const [tab, setTab] = useState("posts"); // posts | saved | liked
+export default function ProfilePage() {
+  const router = useRouter();
+
+  // ✅ Make this page safe even if useAuth() returns null during prerender
+  const auth = useAuth?.() || {};
+  const user = auth.user || null;
+  const userDoc = auth.userDoc || null;
+  const loading = !!auth.loading;
+
+  const [tab, setTab] = useState("posts");
+
   const [myPosts, setMyPosts] = useState([]);
   const [savedPosts, setSavedPosts] = useState([]);
   const [likedPosts, setLikedPosts] = useState([]);
+  const [commentedPosts, setCommentedPosts] = useState([]);
+  const [sharedPosts, setSharedPosts] = useState([]);
+  const [viewedPosts, setViewedPosts] = useState([]);
+
+  // Init tab from URL + listen back/forward navigation
+  useEffect(() => {
+    const apply = () => setTab(safeTabFromUrl());
+    apply();
+    window.addEventListener("popstate", apply);
+    return () => window.removeEventListener("popstate", apply);
+  }, []);
+
+  function goTab(next) {
+    setTab(next);
+    router.push(`/profile?tab=${next}`);
+  }
 
   // My posts
   useEffect(() => {
@@ -105,17 +132,17 @@ export default function ProfilePage() {
     return () => unsub();
   }, [user]);
 
-  // Saved posts (IDs in users/{uid}/savedPosts)
+  // Saved posts (users/{uid}/saves)
   useEffect(() => {
     if (!user) return;
 
-    const savedRef = collection(db, "users", user.uid, "savedPosts");
-    const qy = query(savedRef, orderBy("createdAt", "desc"), limit(30));
+    const savesRef = collection(db, "users", user.uid, "saves");
+    const qy = query(savesRef, orderBy("createdAt", "desc"), limit(30));
 
     const unsub = onSnapshot(
       qy,
       async (snap) => {
-        const ids = snap.docs.map((d) => d.id);
+        const ids = snap.docs.map((d) => d.id); // doc id == postId
         const hydrated = await hydratePostsByIds(ids);
         setSavedPosts(hydrated);
       },
@@ -125,7 +152,7 @@ export default function ProfilePage() {
     return () => unsub();
   }, [user]);
 
-  // Liked posts (IDs in users/{uid}/votes where value == 1)
+  // Liked posts (users/{uid}/votes where value == 1)
   useEffect(() => {
     if (!user) return;
 
@@ -135,7 +162,7 @@ export default function ProfilePage() {
     const unsub = onSnapshot(
       qy,
       async (snap) => {
-        const ids = snap.docs.map((d) => d.id);
+        const ids = snap.docs.map((d) => d.id); // doc id == postId
         const hydrated = await hydratePostsByIds(ids);
         setLikedPosts(hydrated);
       },
@@ -143,6 +170,50 @@ export default function ProfilePage() {
     );
 
     return () => unsub();
+  }, [user]);
+
+  // Activity helpers (commented/shared/viewed) from users/{uid}/activity
+  function listenActivity(type, setter) {
+    if (!user) return () => {};
+    const actRef = collection(db, "users", user.uid, "activity");
+    const qy = query(
+      actRef,
+      where("type", "==", type),
+      orderBy("createdAt", "desc"),
+      limit(30)
+    );
+
+    return onSnapshot(
+      qy,
+      async (snap) => {
+        const ids = snap.docs
+          .map((d) => d.data()?.postId)
+          .filter(Boolean)
+          .slice(0, 30);
+        const hydrated = await hydratePostsByIds(ids);
+        setter(hydrated);
+      },
+      () => setter([])
+    );
+  }
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = listenActivity("comment", setCommentedPosts);
+    return () => unsub?.();
+  }, [user]);
+
+  useEffect(() => {
+    if (!user) return;
+    const unsub = listenActivity("share", setSharedPosts);
+    return () => unsub?.();
+  }, [user]);
+
+  // Viewed activity may be empty unless you also record it when opening posts.
+  useEffect(() => {
+    if (!user) return;
+    const unsub = listenActivity("view", setViewedPosts);
+    return () => unsub?.();
   }, [user]);
 
   const displayName =
@@ -153,11 +224,23 @@ export default function ProfilePage() {
   const activeList = useMemo(() => {
     if (tab === "saved") return savedPosts;
     if (tab === "liked") return likedPosts;
+    if (tab === "commented") return commentedPosts;
+    if (tab === "shared") return sharedPosts;
+    if (tab === "viewed") return viewedPosts;
     return myPosts;
-  }, [tab, myPosts, savedPosts, likedPosts]);
+  }, [tab, myPosts, savedPosts, likedPosts, commentedPosts, sharedPosts, viewedPosts]);
+
+  const counts = {
+    posts: myPosts.length,
+    saved: savedPosts.length,
+    liked: likedPosts.length,
+    commented: commentedPosts.length,
+    shared: sharedPosts.length,
+    viewed: viewedPosts.length,
+  };
 
   return (
-    <Shell>
+    <>
       <div className="rounded-2xl border bg-white p-4 shadow-sm">
         <div className="flex items-start justify-between gap-4">
           <div>
@@ -207,39 +290,28 @@ export default function ProfilePage() {
           </div>
         </div>
 
+        {/* Tabs (works with /profile?tab=xxx) */}
         <div className="mt-4 flex flex-wrap gap-2">
-          <button
-            onClick={() => setTab("posts")}
-            className={`rounded-xl px-3 py-2 text-sm border transition ${
-              tab === "posts"
-                ? "bg-black text-white border-black"
-                : "bg-white hover:bg-gray-50"
-            }`}
-          >
-            My Posts ({myPosts.length})
-          </button>
-
-          <button
-            onClick={() => setTab("saved")}
-            className={`rounded-xl px-3 py-2 text-sm border transition ${
-              tab === "saved"
-                ? "bg-black text-white border-black"
-                : "bg-white hover:bg-gray-50"
-            }`}
-          >
-            Saved ({savedPosts.length})
-          </button>
-
-          <button
-            onClick={() => setTab("liked")}
-            className={`rounded-xl px-3 py-2 text-sm border transition ${
-              tab === "liked"
-                ? "bg-black text-white border-black"
-                : "bg-white hover:bg-gray-50"
-            }`}
-          >
-            Liked ({likedPosts.length})
-          </button>
+          {[
+            ["posts", "My Posts"],
+            ["saved", "Saved"],
+            ["liked", "Liked"],
+            ["commented", "Commented"],
+            ["shared", "Shared"],
+            ["viewed", "Viewed"],
+          ].map(([key, label]) => (
+            <button
+              key={key}
+              onClick={() => goTab(key)}
+              className={`rounded-xl px-3 py-2 text-sm border transition ${
+                tab === key
+                  ? "bg-black text-white border-black"
+                  : "bg-white hover:bg-gray-50"
+              }`}
+            >
+              {label} ({counts[key] ?? 0})
+            </button>
+          ))}
         </div>
       </div>
 
@@ -258,12 +330,12 @@ export default function ProfilePage() {
           <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
             Nothing here yet.
             <div className="text-xs text-gray-500 mt-1">
-              Create a post from the Home page, or save/like posts to see them
-              here.
+              Create a post from the Home page, or save/like/comment/share posts
+              to see them here.
             </div>
           </div>
         )}
       </div>
-    </Shell>
+    </>
   );
 }

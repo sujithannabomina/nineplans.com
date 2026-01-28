@@ -9,7 +9,7 @@ function PostCard({ post }) {
   return (
     <Link
       href={`/post/${post.id}`}
-      className="block rounded-2xl border bg-white p-4 shadow-sm hover:shadow-md transition"
+      className="block rounded-2xl border bg-white p-4 shadow-sm transition hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
         <div>
@@ -48,20 +48,12 @@ export default function HomeFeed({ feed = "latest" }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const mode = feed === "trending" ? "trending" : "latest";
-
-    // reset state when feed changes (prevents old list “sticking”)
-    setPosts([]);
     setLoading(true);
-
-    let first = true;
+    const mode = feed === "trending" ? "trending" : "latest";
 
     const unsub = listenFeed({ mode }, (list) => {
       setPosts(Array.isArray(list) ? list : []);
-      if (first) {
-        first = false;
-        setLoading(false);
-      }
+      setLoading(false);
     });
 
     return () => unsub?.();
@@ -93,7 +85,7 @@ export default function HomeFeed({ feed = "latest" }) {
       <div className="mt-4 space-y-4">
         {loading ? (
           <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
-            Loading…{" "}
+            Loading…
             <div className="text-xs text-gray-500">Fetching fresh posts.</div>
           </div>
         ) : posts?.length ? (
@@ -101,8 +93,8 @@ export default function HomeFeed({ feed = "latest" }) {
         ) : (
           <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
             No posts yet.
-            <div className="text-xs text-gray-500 mt-1">
-              Be the first to create one.
+            <div className="mt-1 text-xs text-gray-500">
+              Be the first to create a post.
             </div>
           </div>
         )}
