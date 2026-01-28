@@ -1,17 +1,18 @@
 // app/page.jsx
-"use client";
-
-import { useMemo } from "react";
-import { useSearchParams } from "next/navigation";
-import HomeFeed from "@/components/HomeFeed";
+import { Suspense } from "react";
+import HomePageClient from "./page.client";
 
 export default function HomePage() {
-  const searchParams = useSearchParams();
-
-  const feed = useMemo(() => {
-    const v = (searchParams?.get("feed") || "").toLowerCase();
-    return v === "trending" ? "trending" : "latest";
-  }, [searchParams]);
-
-  return <HomeFeed feed={feed} />;
+  return (
+    <Suspense
+      fallback={
+        <div className="rounded-2xl border bg-white p-6 text-sm text-gray-600 shadow-sm">
+          Loading…{" "}
+          <div className="text-xs text-gray-500">Preparing feed…</div>
+        </div>
+      }
+    >
+      <HomePageClient />
+    </Suspense>
+  );
 }
