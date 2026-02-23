@@ -1,37 +1,27 @@
-// app/not-found.jsx
 import Link from "next/link";
+import Shell from "@/components/Shell";
 
 export default function NotFound() {
   return (
-    <div className="rounded-2xl border bg-white p-6 shadow-sm">
-      <h1 className="text-2xl font-semibold">Page not found</h1>
-      <p className="mt-2 text-sm text-gray-600">
-        The page you tried to open doesn’t exist or has been moved.
-      </p>
-
-      <div className="mt-5 flex flex-wrap gap-2">
-        <Link
-          href="/"
-          className="rounded-xl bg-black px-4 py-2 text-sm text-white hover:bg-gray-900"
-        >
-          Go Home
-        </Link>
-        <Link href="/profile" className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50">
-          Profile
-        </Link>
-        <Link href="/rules" className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50">
-          Rules
-        </Link>
-        <Link href="/policy" className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50">
-          Policy
-        </Link>
-        <Link href="/faq" className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50">
-          FAQ
-        </Link>
-        <Link href="/contact" className="rounded-xl border px-4 py-2 text-sm hover:bg-gray-50">
-          Contact
-        </Link>
+    <Shell>
+      <div className="card p-12 text-center">
+        <div className="text-6xl mb-4">🌑</div>
+        <h1 className="text-2xl font-bold text-white mb-2">Page Not Found</h1>
+        <p className="text-white/50 text-sm mb-6">
+          The page you're looking for doesn't exist or has been moved.
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-2">
+          <Link href="/" className="rounded-full bg-white px-5 py-2 text-sm font-bold text-black hover:bg-neutral-200 transition">
+            Go Home
+          </Link>
+          <Link href="/categories" className="rounded-full border border-white/20 px-5 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition">
+            Browse Categories
+          </Link>
+          <Link href="/submit" className="rounded-full border border-white/20 px-5 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition">
+            Create Post
+          </Link>
+        </div>
       </div>
-    </div>
+    </Shell>
   );
 }

@@ -2,52 +2,76 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    function signedIn() { return request.auth != null; }
-    function uid() { return request.auth.uid; }
+    // ─── Helper functions ───────────────────────────────────────────
+    function signedIn() {
+      return request.auth != null;
+    }
+    function uid() {
+      return request.auth.uid;
+    }
     function isAdmin() {
       return signedIn()
         && exists(/databases/$(database)/documents/users/$(uid()))
         && get(/databases/$(database)/documents/users/$(uid())).data.role == "admin";
     }
 
+    // ─── Categories ─────────────────────────────────────────────────
+    // Anyone can read. Only admins can write.
     match /categories/{slug} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
+    // ─── Users ──────────────────────────────────────────────────────
+    // Users can read/write their own doc. Cannot change their role.
     match /users/{userId} {
       allow read: if signedIn() && userId == uid();
       allow create: if signedIn() && userId == uid();
-      allow update: if signedIn() && userId == uid() && !("role" in request.resource.data);
+      allow update: if signedIn() && userId == uid()
+        && !("role" in request.resource.data);
       allow delete: if false;
+
+      // Sub-collections: votes, saves, activity
+      match /votes/{postId} {
+        allow read, write: if signedIn() && userId == uid();
+      }
+      match /saves/{postId} {
+        allow read, write: if signedIn() && userId == uid();
+      }
+      match /activity/{actId} {
+        allow read, write: if signedIn() && userId == uid();
+      }
     }
 
+    // ─── Posts ──────────────────────────────────────────────────────
     match /posts/{postId} {
       allow read: if true;
 
+      // Create: must be signed in, authorUid must match, status must be "active"
       allow create: if signedIn()
         && request.resource.data.authorUid == uid()
         && request.resource.data.status == "active"
         && request.resource.data.title is string
         && request.resource.data.body is string;
 
+      // Update/delete: only admins (for moderation)
       allow update, delete: if isAdmin();
 
+      // ── Votes on posts ──────────────────────────────────────────
       match /votes/{voterId} {
         allow read: if signedIn() && voterId == uid();
         allow write: if signedIn() && voterId == uid();
       }
 
+      // ── Comments ────────────────────────────────────────────────
       match /comments/{commentId} {
         allow read: if true;
-
         allow create: if signedIn()
-          && request.resource.data.authorUid == uid()
-          && request.resource.data.status == "active"
-          && request.resource.data.body is string;
-
+          && request.resource.data.uid == uid()
+          && request.resource.data.text is string;
         allow update, delete: if isAdmin();
 
+        // Votes on comments
         match /votes/{voterId} {
           allow read: if signedIn() && voterId == uid();
           allow write: if signedIn() && voterId == uid();
@@ -55,6 +79,7 @@ service cloud.firestore {
       }
     }
 
+    // ─── Reports ────────────────────────────────────────────────────
     match /reports/{reportId} {
       allow read: if isAdmin();
       allow create: if signedIn()
@@ -62,5 +87,6 @@ service cloud.firestore {
         && request.resource.data.status == "open";
       allow update, delete: if isAdmin();
     }
+
   }
 }

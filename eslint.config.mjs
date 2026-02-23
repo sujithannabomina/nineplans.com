@@ -1,15 +1,20 @@
-import js from '@eslint/js'
-import nextPlugin from '@next/eslint-plugin-next'
+import { FlatCompat } from '@eslint/eslintrc'
+import { fileURLToPath } from 'url'
+import path from 'path'
 
-export default [
-  js.configs.recommended,
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = path.dirname(__filename)
+
+const compat = new FlatCompat({ baseDirectory: __dirname })
+
+const config = [
+  ...compat.extends('next/core-web-vitals'),
   {
-    plugins: {
-      '@next/next': nextPlugin,
-    },
     rules: {
-      ...nextPlugin.configs.recommended.rules,
-      ...nextPlugin.configs['core-web-vitals'].rules,
+      'react/no-unescaped-entities': 'off',
+      '@next/next/no-img-element': 'off',
     },
   },
 ]
+
+export default config

@@ -2,20 +2,53 @@
 @tailwind components;
 @tailwind utilities;
 
+@layer base {
+  html, body {
+    @apply bg-black text-white;
+  }
+  * {
+    box-sizing: border-box;
+  }
+}
+
 @layer components {
   .card {
-    @apply rounded-2xl border border-black/10 bg-white shadow-sm;
+    @apply rounded-2xl border border-white/10 bg-neutral-900 shadow-sm;
+  }
+  .card-hover {
+    @apply rounded-2xl border border-white/10 bg-neutral-900 shadow-sm hover:border-white/25 hover:bg-neutral-800 transition;
   }
   .btn {
-    @apply inline-flex items-center justify-center rounded-xl px-4 py-2 text-sm font-semibold transition;
+    @apply inline-flex items-center justify-center gap-2 rounded-full px-4 py-2 text-sm font-semibold transition;
   }
-  .btn-black {
-    @apply btn bg-black text-white hover:bg-black/90;
+  .btn-primary {
+    @apply btn bg-white text-black hover:bg-neutral-200;
   }
   .btn-outline {
-    @apply btn border border-black/15 bg-white text-black hover:bg-black hover:text-white;
+    @apply btn border border-white/20 bg-transparent text-white hover:bg-white/10;
+  }
+  .btn-ghost {
+    @apply btn text-white/70 hover:text-white hover:bg-white/10;
+  }
+  .input {
+    @apply w-full rounded-xl border border-white/10 bg-neutral-800 px-4 py-2.5 text-sm text-white placeholder-white/30 outline-none focus:border-white/40 focus:ring-0 transition;
+  }
+  .textarea {
+    @apply input resize-none;
+  }
+  .select {
+    @apply input appearance-none cursor-pointer;
+  }
+  .badge {
+    @apply inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5 text-xs text-white/70;
   }
   .linkRow {
-    @apply block rounded-xl px-3 py-2 hover:bg-black hover:text-white transition;
+    @apply flex items-center gap-2 rounded-xl px-3 py-2 text-sm text-white/70 hover:bg-white/10 hover:text-white transition;
+  }
+  .section-title {
+    @apply text-xs font-bold uppercase tracking-widest text-white/40 mb-2;
+  }
+  .divider {
+    @apply border-t border-white/10 my-3;
   }
 }

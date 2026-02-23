@@ -1,4 +1,3 @@
-// components/Shell.jsx
 "use client";
 
 import { Suspense } from "react";
@@ -8,26 +7,34 @@ import RightRail from "@/components/RightRail";
 
 export default function Shell({ children }) {
   return (
-    <div className="min-h-screen bg-gray-50 text-gray-900">
-      {/* Suspense prevents Vercel build failures if any child uses useSearchParams() */}
+    <div className="min-h-screen bg-black text-white">
       <Suspense fallback={null}>
         <Header />
       </Suspense>
 
-      <div className="mx-auto max-w-7xl px-4 pb-10">
-        <div className="grid grid-cols-1 gap-6 pt-6 lg:grid-cols-12">
-          <aside className="lg:col-span-3">
-            <Suspense fallback={null}>
-              <LeftNav />
-            </Suspense>
+      <div className="mx-auto max-w-7xl px-3 sm:px-4 pb-12">
+        <div className="grid grid-cols-1 gap-5 pt-5 lg:grid-cols-12">
+          {/* Left sidebar — hidden on mobile */}
+          <aside className="hidden lg:block lg:col-span-3">
+            <div className="sticky top-[72px]">
+              <Suspense fallback={null}>
+                <LeftNav />
+              </Suspense>
+            </div>
           </aside>
 
-          <main className="lg:col-span-6">{children}</main>
+          {/* Main content */}
+          <main className="lg:col-span-6 min-w-0">
+            {children}
+          </main>
 
-          <aside className="lg:col-span-3">
-            <Suspense fallback={null}>
-              <RightRail />
-            </Suspense>
+          {/* Right rail — hidden on mobile */}
+          <aside className="hidden lg:block lg:col-span-3">
+            <div className="sticky top-[72px]">
+              <Suspense fallback={null}>
+                <RightRail />
+              </Suspense>
+            </div>
           </aside>
         </div>
       </div>

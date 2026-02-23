@@ -1,17 +1,17 @@
-// app/layout.jsx
 import "./globals.css";
-import Shell from "@/components/Shell";
+import Providers from "@/app/providers";
 
 export const metadata = {
-  title: "NinePlans",
-  description: "Alias-first community for anonymous-friendly posts.",
+  title: "NinePlans — Post Anonymous",
+  description: "The alias-first community. Post freely, discuss everything, stay anonymous.",
+  icons: { icon: "/favicon.ico" },
 };
 
 export default function RootLayout({ children }) {
   return (
-    <html lang="en">
-      <body className="bg-neutral-50 text-neutral-900">
-        <Shell>{children}</Shell>
+    <html lang="en" className="bg-black">
+      <body className="bg-black text-white min-h-screen antialiased">
+        <Providers>{children}</Providers>
       </body>
     </html>
   );

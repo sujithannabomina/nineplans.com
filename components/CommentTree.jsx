@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useMemo, useState } from "react";
-import { ArrowBigUp, ArrowBigDown, Reply } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowBigUp, ArrowBigDown, Reply, ChevronDown, ChevronUp } from "lucide-react";
 import useAuth from "@/hooks/useAuth";
-import { createComment, voteComment } from "@/lib/firestore";
+import { addComment } from "@/lib/firestore";
 import { timeAgo } from "@/lib/utils";
 
 function buildTree(comments) {
@@ -12,10 +12,8 @@ function buildTree(comments) {
   comments.forEach((c) => map.set(c.id, { ...c, children: [] }));
   comments.forEach((c) => {
     const node = map.get(c.id);
-    if (c.parentId) {
-      const parent = map.get(c.parentId);
-      if (parent) parent.children.push(node);
-      else roots.push(node);
+    if (c.parentId && map.has(c.parentId)) {
+      map.get(c.parentId).children.push(node);
     } else {
       roots.push(node);
     }
@@ -23,16 +21,12 @@ function buildTree(comments) {
   return roots;
 }
 
-function Item({ node, postId }) {
-  const { user, login } = useAuth();
+function CommentItem({ node, postId, depth = 0 }) {
+  const { user, userDoc, login } = useAuth();
   const [replying, setReplying] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
   const [body, setBody] = useState("");
   const [busy, setBusy] = useState(false);
-
-  const doVote = async (v) => {
-    if (!user) return login();
-    await voteComment(postId, node.id, user.uid, v);
-  };
 
   const sendReply = async () => {
     if (!user) return login();
@@ -40,12 +34,12 @@ function Item({ node, postId }) {
     if (!text) return;
     setBusy(true);
     try {
-      await createComment({
+      await addComment({
+        uid: user.uid,
         postId,
+        text,
+        alias: userDoc?.alias || userDoc?.name || "User",
         parentId: node.id,
-        authorUid: user.uid,
-        authorAlias: user.primaryAlias,
-        body: text,
       });
       setBody("");
       setReplying(false);
@@ -54,53 +48,104 @@ function Item({ node, postId }) {
     }
   };
 
+  const timeLabel = node.createdAt ? timeAgo(node.createdAt?.toMillis?.() || node.createdAt) : "";
+  const hasChildren = node.children?.length > 0;
+
   return (
-    <div className="mt-3">
-      <div className="flex gap-3">
-        <div className="flex flex-col items-center gap-1 pt-1">
-          <button className="btn-outline px-2 py-2" onClick={() => doVote(1)} aria-label="Upvote comment">
-            <ArrowBigUp className="h-4 w-4" />
-          </button>
-          <div className="text-xs font-bold">{node.score}</div>
-          <button className="btn-outline px-2 py-2" onClick={() => doVote(-1)} aria-label="Downvote comment">
-            <ArrowBigDown className="h-4 w-4" />
-          </button>
+    <div className={depth > 0 ? "ml-4 border-l border-white/10 pl-3" : ""}>
+      <div className="py-2">
+        {/* Comment header */}
+        <div className="flex items-center gap-2 text-xs text-white/40 mb-1">
+          <span className="font-semibold text-white/70">{node.alias || node.authorAlias || "User"}</span>
+          {timeLabel && <><span>•</span><span>{timeLabel}</span></>}
+          {hasChildren && (
+            <button
+              onClick={() => setCollapsed((v) => !v)}
+              className="ml-auto flex items-center gap-1 text-white/30 hover:text-white/60 transition"
+            >
+              {collapsed ? <ChevronDown className="h-3 w-3" /> : <ChevronUp className="h-3 w-3" />}
+              {collapsed ? `${node.children.length} replies` : ""}
+            </button>
+          )}
         </div>
 
-        <div className="min-w-0 flex-1">
-          <div className="text-xs text-black/60">
-            <span className="font-semibold text-black">{node.authorAlias}</span> • {timeAgo(node.createdAt)}
-          </div>
-          <div className="mt-1 text-sm whitespace-pre-wrap">{node.body}</div>
-          <div className="mt-2">
-            <button className="btn-outline px-3 py-2 text-xs" onClick={() => setReplying((s) => !s)}>
-              <Reply className="h-4 w-4" /> Reply
+        {/* Comment body */}
+        <p className="text-sm text-white/80 whitespace-pre-wrap leading-relaxed">
+          {node.text || node.body}
+        </p>
+
+        {/* Actions */}
+        {depth < 2 && (
+          <div className="mt-1.5">
+            <button
+              onClick={() => setReplying((v) => !v)}
+              className="inline-flex items-center gap-1 text-xs text-white/30 hover:text-white/60 hover:bg-white/5 rounded-full px-2 py-1 transition"
+            >
+              <Reply className="h-3 w-3" />
+              Reply
             </button>
           </div>
+        )}
 
-          {replying && (
-            <div className="mt-2 card p-3">
-              <textarea className="input min-h-[80px]" value={body} onChange={(e) => setBody(e.target.value)} placeholder="Write a reply…" />
-              <div className="mt-2 flex justify-end gap-2">
-                <button className="btn-outline" onClick={() => setReplying(false)}>Cancel</button>
-                <button className="btn" onClick={sendReply} disabled={busy}>{busy ? "Posting…" : "Post reply"}</button>
-              </div>
+        {/* Reply input */}
+        {replying && (
+          <div className="mt-2 space-y-2">
+            <textarea
+              value={body}
+              onChange={(e) => setBody(e.target.value)}
+              className="textarea text-sm"
+              rows={2}
+              placeholder="Write a reply…"
+              autoFocus
+            />
+            <div className="flex gap-2">
+              <button
+                onClick={() => setReplying(false)}
+                className="rounded-full border border-white/10 px-3 py-1.5 text-xs text-white/50 hover:bg-white/10 transition"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={sendReply}
+                disabled={busy || !body.trim()}
+                className="rounded-full bg-white px-3 py-1.5 text-xs font-semibold text-black hover:bg-neutral-200 transition disabled:opacity-40"
+              >
+                {busy ? "Posting…" : "Reply"}
+              </button>
             </div>
-          )}
-
-          {node.children?.length > 0 ? (
-            <div className="mt-3 border-l border-black/10 pl-4">
-              {node.children.map((ch) => <Item key={ch.id} node={ch} postId={postId} />)}
-            </div>
-          ) : null}
-        </div>
+          </div>
+        )}
       </div>
+
+      {/* Nested children */}
+      {!collapsed && hasChildren && (
+        <div>
+          {node.children.map((child) => (
+            <CommentItem key={child.id} node={child} postId={postId} depth={depth + 1} />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
 
 export default function CommentTree({ comments, postId }) {
   const tree = useMemo(() => buildTree(comments || []), [comments]);
-  if (!tree.length) return <div className="text-sm text-black/60">No comments yet. Be the first.</div>;
-  return <div>{tree.map((n) => <Item key={n.id} node={n} postId={postId} />)}</div>;
+
+  if (!tree.length) {
+    return (
+      <div className="py-6 text-center">
+        <div className="text-2xl mb-2">💬</div>
+        <div className="text-sm text-white/40">No comments yet. Be the first to share your thoughts.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="divide-y divide-white/5">
+      {tree.map((node) => (
+        <CommentItem key={node.id} node={node} postId={postId} depth={0} />
+      ))}
+    </div>
+  );
 }

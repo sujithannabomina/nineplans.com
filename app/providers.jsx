@@ -1,4 +1,3 @@
-// app/providers.jsx
 "use client";
 
 import React, { createContext, useEffect, useMemo, useState } from "react";
@@ -19,8 +18,12 @@ export default function Providers({ children }) {
   const [loading, setLoading] = useState(true);
 
   async function login() {
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
+    try {
+      const provider = new GoogleAuthProvider();
+      await signInWithPopup(auth, provider);
+    } catch (e) {
+      console.error("Login error:", e);
+    }
   }
 
   async function logout() {
@@ -28,7 +31,6 @@ export default function Providers({ children }) {
   }
 
   useEffect(() => {
-    // Make sure categories exist (so sidebar never stays empty)
     seedDefaultCategoriesIfEmpty().catch(() => {});
 
     const unsub = onAuthStateChanged(auth, async (u) => {
@@ -47,13 +49,7 @@ export default function Providers({ children }) {
   }, []);
 
   const value = useMemo(
-    () => ({
-      user,
-      userDoc,
-      loading,
-      login,
-      logout,
-    }),
+    () => ({ user, userDoc, loading, login, logout }),
     [user, userDoc, loading]
   );
 
