@@ -1,9 +1,10 @@
+// components/LeftNav.jsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, TrendingUp, Clock, LayoutGrid, HelpCircle, Shield, FileText, Mail } from "lucide-react";
+import { ChevronDown, ChevronUp } from "lucide-react";
 import { listenCategories, seedDefaultCategoriesIfEmpty } from "@/lib/firestore";
 
 const CATEGORY_ICONS = {
@@ -31,6 +32,43 @@ const CATEGORY_ICONS = {
   "photography-art": "📸",
 };
 
+// Fix #4: active state uses neutral-800 bg + neutral-100 text instead of pure white bg
+function NavItem({ href, icon, label, active }) {
+  return (
+    <Link
+      href={href}
+      className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition ${
+        active
+          ? "bg-neutral-700 text-neutral-100 font-medium"
+          : "text-neutral-500 hover:bg-neutral-800/80 hover:text-neutral-300"
+      }`}
+    >
+      <span className="text-base">{icon}</span>
+      {label}
+    </Link>
+  );
+}
+
+// Fix #2: collapsible section component
+function CollapsibleSection({ title, children, defaultOpen = false }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <div>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="flex w-full items-center justify-between px-1 py-1.5 text-xs font-bold uppercase tracking-widest text-neutral-600 hover:text-neutral-400 transition mb-0.5"
+      >
+        {title}
+        {open
+          ? <ChevronUp className="h-3 w-3" />
+          : <ChevronDown className="h-3 w-3" />
+        }
+      </button>
+      {open && <div className="space-y-0.5">{children}</div>}
+    </div>
+  );
+}
+
 export default function LeftNav() {
   const pathname = usePathname();
   const [categories, setCategories] = useState([]);
@@ -53,95 +91,78 @@ export default function LeftNav() {
     return () => { try { unsub?.(); } catch {} };
   }, []);
 
-  const topCats = useMemo(() => categories.slice(0, 10), [categories]);
-
-  const navLink = (href, label, icon) => {
-    const active = pathname === href || (href !== "/" && pathname.startsWith(href));
-    return (
-      <Link
-        key={href}
-        href={href}
-        className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition ${
-          active ? "bg-white text-black font-semibold" : "text-white/70 hover:bg-white/10 hover:text-white"
-        }`}
-      >
-        <span className="text-base">{icon}</span>
-        {label}
-      </Link>
-    );
-  };
+  const topCats = useMemo(() => categories.slice(0, 14), [categories]);
 
   return (
-    <div className="space-y-3">
-      {/* Explore */}
+    <div className="space-y-3 pb-8">
+
+      {/* EXPLORE — always visible, no dropdown needed */}
       <div className="card p-3">
         <div className="section-title">Explore</div>
         <div className="space-y-0.5">
-          {navLink("/", "Home", "🏠")}
-          {navLink("/?feed=trending", "Trending", "🔥")}
-          {navLink("/?feed=latest", "Latest", "🆕")}
+          <NavItem href="/" icon="🏠" label="Home" active={pathname === "/"} />
+          <NavItem href="/?feed=trending" icon="🔥" label="Trending" active={false} />
+          <NavItem href="/?feed=latest" icon="🆕" label="Latest" active={false} />
         </div>
       </div>
 
-      {/* Categories */}
+      {/* CATEGORIES — Fix #2: collapsible dropdown */}
       <div className="card p-3">
-        <div className="flex items-center justify-between mb-2">
-          <div className="section-title mb-0">Categories</div>
-          <Link href="/categories" className="text-xs text-white/40 hover:text-white transition">
-            All →
-          </Link>
-        </div>
-
-        {catLoading ? (
-          <div className="space-y-1.5">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="h-8 rounded-xl bg-white/5 animate-pulse" />
-            ))}
-          </div>
-        ) : (
-          <div className="space-y-0.5">
-            {topCats.map((c) => (
+        <CollapsibleSection title="Categories" defaultOpen={false}>
+          {catLoading ? (
+            <div className="space-y-1.5 mt-1">
+              {[...Array(5)].map((_, i) => (
+                <div key={i} className="h-8 rounded-xl bg-neutral-800 animate-pulse" />
+              ))}
+            </div>
+          ) : (
+            <>
+              {topCats.map((c) => (
+                <NavItem
+                  key={c.id}
+                  href={`/c/${c.slug}`}
+                  icon={CATEGORY_ICONS[c.slug] || "📌"}
+                  label={c.name}
+                  active={pathname === `/c/${c.slug}`}
+                />
+              ))}
               <Link
-                key={c.id}
-                href={`/c/${c.slug}`}
-                className={`flex items-center gap-2.5 rounded-xl px-3 py-2 text-sm transition ${
-                  pathname === `/c/${c.slug}` ? "bg-white text-black font-semibold" : "text-white/70 hover:bg-white/10 hover:text-white"
-                }`}
+                href="/categories"
+                className="flex items-center gap-2.5 rounded-xl px-3 py-1.5 text-xs text-neutral-600 hover:text-neutral-400 transition"
               >
-                <span>{CATEGORY_ICONS[c.slug] || "📌"}</span>
-                {c.name}
+                <span>↗</span> View all categories
               </Link>
-            ))}
-          </div>
-        )}
+            </>
+          )}
+        </CollapsibleSection>
       </div>
 
-      {/* Most popular shortcuts */}
+      {/* MY ACTIVITY — Fix #2: collapsible dropdown */}
       <div className="card p-3">
-        <div className="section-title">My Activity</div>
-        <div className="space-y-0.5">
-          {navLink("/profile?tab=liked", "Most Liked", "👍")}
-          {navLink("/profile?tab=commented", "Commented", "💬")}
-          {navLink("/profile?tab=saved", "Saved", "🔖")}
-          {navLink("/profile?tab=viewed", "Viewed", "👀")}
-        </div>
+        <CollapsibleSection title="My Activity" defaultOpen={false}>
+          <NavItem href="/profile?tab=liked" icon="👍" label="Most Liked" active={false} />
+          <NavItem href="/profile?tab=commented" icon="💬" label="Commented" active={false} />
+          <NavItem href="/profile?tab=saved" icon="🔖" label="Saved" active={false} />
+          <NavItem href="/profile?tab=viewed" icon="👀" label="Viewed" active={false} />
+        </CollapsibleSection>
       </div>
 
-      {/* Legal / Policy */}
+      {/* NINEPLANS LEGAL */}
       <div className="card p-3">
         <div className="section-title">NinePlans</div>
         <div className="space-y-0.5">
-          {navLink("/rules", "Rules", "📋")}
-          {navLink("/policy", "Policy", "🛡️")}
-          {navLink("/faq", "FAQ", "❓")}
-          {navLink("/terms", "Terms", "📜")}
-          {navLink("/privacy", "Privacy", "🔒")}
-          {navLink("/contact", "Contact", "✉️")}
+          <NavItem href="/rules" icon="📋" label="Rules" active={pathname === "/rules"} />
+          <NavItem href="/policy" icon="🛡️" label="Policy" active={pathname === "/policy"} />
+          <NavItem href="/faq" icon="❓" label="FAQ" active={pathname === "/faq"} />
+          <NavItem href="/terms" icon="📜" label="Terms" active={pathname === "/terms"} />
+          <NavItem href="/privacy" icon="🔒" label="Privacy" active={pathname === "/privacy"} />
+          <NavItem href="/contact" icon="✉️" label="Contact" active={pathname === "/contact"} />
         </div>
-        <div className="mt-3 pt-3 border-t border-white/10 text-xs text-white/25 text-center">
+        <div className="mt-3 pt-3 border-t border-neutral-800 text-xs text-neutral-700 text-center">
           © {new Date().getFullYear()} NinePlans™
         </div>
       </div>
+
     </div>
   );
 }

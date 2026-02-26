@@ -1,3 +1,5 @@
+// components/AdSlot.jsx
+// Fix #6: removed duplicate — file was pasted twice, keeping single clean version
 'use client';
 
 import React, { useEffect } from "react";
@@ -15,9 +17,8 @@ export default function AdSlot({ slot, className = "" }) {
 
   if (!pub || !slot) {
     return (
-      <div className={`card p-4 ${className}`}>
-        <div className="text-xs font-semibold">Ad space</div>
-        <div className="text-xs text-black/60 mt-1">Set AdSense env vars to enable ads.</div>
+      <div className={`flex items-center justify-center rounded-xl border border-dashed border-neutral-800 min-h-[120px] ${className}`}>
+        <span className="text-xs text-neutral-700">Ad Space (Google AdSense)</span>
       </div>
     );
   }
