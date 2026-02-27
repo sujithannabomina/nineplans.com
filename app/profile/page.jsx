@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import Shell from "@/components/Shell";
@@ -108,7 +108,7 @@ function StatBox({ value, label }) {
   );
 }
 
-export default function ProfilePage() {
+function ProfilePageInner() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const { user, userDoc, loading: authLoading } = useAuth();
@@ -323,5 +323,17 @@ export default function ProfilePage() {
 
       </div>
     </Shell>
+  );
+}
+
+export default function ProfilePage() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center py-20">
+        <div className="h-6 w-6 rounded-full border-2 border-white/20 border-t-white animate-spin" />
+      </div>
+    }>
+      <ProfilePageInner />
+    </Suspense>
   );
 }
