@@ -5,7 +5,7 @@ import Shell from "@/components/Shell";
 import useAuth from "@/hooks/useAuth";
 import { updateAlias, updateProfileInfo } from "@/lib/firestore";
 import Link from "next/link";
-import { doc, updateDoc } from "firebase/firestore";
+import { doc, setDoc } from "firebase/firestore";
 import { db } from "@/lib/db";
 
 const ANON_SUGGESTIONS = [
@@ -52,9 +52,11 @@ export default function ProfileSettingsPage() {
       await updateProfileInfo(user.uid, { name: name.trim(), phone: phone.trim() });
       await updateAlias(user.uid, trimmedAlias);
 
-      // Also save anonName to profiles doc
-      const profileRef = doc(db, "profiles", user.uid);
-      await updateDoc(profileRef, { anonName: trimmedAnon });
+      / Also save anonName to profiles doc — setDoc with merge creates if not exists
+import { setDoc } from "firebase/firestore";  // add to your imports at top
+
+const profileRef = doc(db, "profiles", user.uid);
+await setDoc(profileRef, { anonName: trimmedAnon }, { merge: true });
 
       setMsg({ text: "✅ Profile updated successfully!", ok: true });
     } catch (e) {
