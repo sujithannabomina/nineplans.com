@@ -52,11 +52,8 @@ export default function ProfileSettingsPage() {
       await updateProfileInfo(user.uid, { name: name.trim(), phone: phone.trim() });
       await updateAlias(user.uid, trimmedAlias);
 
-      / Also save anonName to profiles doc — setDoc with merge creates if not exists
-import { setDoc } from "firebase/firestore";  // add to your imports at top
-
-const profileRef = doc(db, "profiles", user.uid);
-await setDoc(profileRef, { anonName: trimmedAnon }, { merge: true });
+      const profileRef = doc(db, "profiles", user.uid);
+      await setDoc(profileRef, { anonName: trimmedAnon }, { merge: true });
 
       setMsg({ text: "✅ Profile updated successfully!", ok: true });
     } catch (e) {
@@ -176,11 +173,11 @@ await setDoc(profileRef, { anonName: trimmedAnon }, { merge: true });
                   onChange={(e) => setAnonName(e.target.value.slice(0, 30))}
                   placeholder="e.g. ShadowFox, PhantomEcho…"
                 />
-                {/* Quick pick suggestions */}
                 <div className="mt-2.5 flex flex-wrap gap-1.5">
                   {ANON_SUGGESTIONS.slice(0, 5).map((s) => (
                     <button
                       key={s}
+                      type="button"
                       onClick={() => setAnonName(s)}
                       className="rounded-full border border-purple-500/20 bg-purple-500/10 px-2.5 py-1 text-xs text-purple-300/70 hover:text-purple-200 hover:border-purple-500/40 transition"
                     >
