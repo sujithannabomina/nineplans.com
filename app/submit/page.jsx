@@ -1,327 +1,217 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { X, ImagePlus, Loader2, User, EyeOff, UserCheck } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
 import Shell from "@/components/Shell";
 import useAuth from "@/hooks/useAuth";
-import { listenCategories } from "@/lib/firestore";
-import { useEffect } from "react";
-import { db } from "@/lib/db";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore";
-import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
-
-const MAX_IMAGES = 2;
-const MAX_SIZE_MB = 10;
-
-const IDENTITY_OPTIONS = [
-  {
-    key: "realname",
-    icon: User,
-    label: "Real Name",
-    desc: "Post as your full name. Visible on your profile.",
-    color: "border-white/20 hover:border-white/40",
-    activeColor: "border-white bg-white/5",
-  },
-  {
-    key: "alias",
-    icon: UserCheck,
-    label: "Alias",
-    desc: "Post under your alias. Profile is hidden from others.",
-    color: "border-white/20 hover:border-white/40",
-    activeColor: "border-blue-400 bg-blue-400/5",
-  },
-  {
-    key: "anonymous",
-    icon: EyeOff,
-    label: "Anonymous",
-    desc: "Completely untraceable. No name, no profile link.",
-    color: "border-white/20 hover:border-white/40",
-    activeColor: "border-purple-400 bg-purple-400/5",
-  },
-];
+import { listenCategories, createPost } from "@/lib/firestore";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { User, UserCheck, EyeOff } from "lucide-react";
 
 export default function SubmitPage() {
-  const router = useRouter();
   const { user, userDoc, login } = useAuth();
-
-  const [title, setTitle]       = useState("");
-  const [body, setBody]         = useState("");
-  const [categorySlug, setCategorySlug] = useState("");
-  const [identity, setIdentity] = useState("realname");
-  const [images, setImages]     = useState([]); // { file, preview }
-  const [categories, setCategories] = useState([]);
-  const [submitting, setSubmitting] = useState(false);
-  const [error, setError]       = useState("");
-  const fileInputRef = useRef(null);
+  const router = useRouter();
+  const [cats, setCats] = useState([]);
+  const [title, setTitle] = useState("");
+  const [body, setBody] = useState("");
+  const [categorySlug, setCategorySlug] = useState("posts");
+  const [postAs, setPostAs] = useState("alias");
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState("");
 
   useEffect(() => {
-    const unsub = listenCategories((list) => setCategories(Array.isArray(list) ? list : []));
+    const unsub = listenCategories(setCats);
     return () => unsub?.();
   }, []);
 
-  if (!user) {
-    return (
-      <Shell>
-        <div className="card p-10 text-center max-w-md mx-auto">
-          <div className="text-3xl mb-3">✍️</div>
-          <div className="text-lg font-bold text-white mb-2">Sign in to post</div>
-          <p className="text-sm text-white/50 mb-5">You need an account to create posts. It's free and takes 10 seconds.</p>
-          <button onClick={login}
-            className="rounded-full bg-white px-6 py-2.5 text-sm font-bold text-black hover:bg-neutral-200 transition">
-            Continue with Google
-          </button>
-        </div>
-      </Shell>
-    );
-  }
+  const selectedCat = useMemo(() => cats.find((c) => c.slug === categorySlug) || null, [cats, categorySlug]);
 
-  function addImages(files) {
-    const remaining = MAX_IMAGES - images.length;
-    const toAdd = Array.from(files).slice(0, remaining);
-    const errors = [];
-    const valid = [];
+  const realName = userDoc?.name || user?.displayName || "";
+  const aliasName = userDoc?.alias || "";
+  const anonPersona = userDoc?.anonName || "";
 
-    for (const f of toAdd) {
-      if (!f.type.startsWith("image/")) { errors.push(`${f.name} is not an image.`); continue; }
-      if (f.size > MAX_SIZE_MB * 1024 * 1024) { errors.push(`${f.name} exceeds ${MAX_SIZE_MB}MB.`); continue; }
-      valid.push({ file: f, preview: URL.createObjectURL(f) });
-    }
+  const titleLimit = 200;
+  const needsAlias = postAs === "alias" && !aliasName;
+  const needsAnon = postAs === "anonymous" && !anonPersona;
 
-    if (errors.length) setError(errors.join(" "));
-    setImages((prev) => [...prev, ...valid]);
-  }
+  const identityOptions = [
+    {
+      value: "real",
+      label: "Real Name",
+      desc: realName || "Your full name",
+      Icon: User,
+      color: "text-green-300",
+      borderSel: "border-green-500/40",
+      bgSel: "bg-green-500/10",
+      hint: realName ? `Posting as "${realName}"` : "Set your name in settings",
+    },
+    {
+      value: "alias",
+      label: "Alias",
+      desc: aliasName || "⚠️ Not set yet",
+      Icon: UserCheck,
+      color: "text-blue-300",
+      borderSel: "border-blue-500/40",
+      bgSel: "bg-blue-500/10",
+      hint: aliasName ? `Posting as "${aliasName}" — profile hidden` : "Set your alias in Profile Settings first",
+      notSet: !aliasName,
+    },
+    {
+      value: "anonymous",
+      label: "Anonymous",
+      desc: anonPersona || "No persona set",
+      Icon: EyeOff,
+      color: "text-purple-300",
+      borderSel: "border-purple-500/40",
+      bgSel: "bg-purple-500/10",
+      hint: anonPersona
+        ? `Posting as "${anonPersona}" — fully untraceable`
+        : `Posting as "Anonymous" — set a persona in settings for a custom name`,
+    },
+  ];
 
-  function removeImage(i) {
-    setImages((prev) => {
-      URL.revokeObjectURL(prev[i].preview);
-      return prev.filter((_, idx) => idx !== i);
-    });
-  }
+  const activeOpt = identityOptions.find((o) => o.value === postAs);
 
-  function handleDrop(e) {
-    e.preventDefault();
-    addImages(e.dataTransfer.files);
-  }
+  async function submit() {
+    if (!user) return login();
+    setErr("");
+    if (!title.trim()) return setErr("Please add a title to your post.");
+    if (!body.trim()) return setErr("Please write something in your post.");
+    if (needsAlias) return setErr("You haven't set an alias yet. Go to Profile Settings to add one.");
 
-  async function uploadImages(uid) {
-    const storage = getStorage();
-    const urls = [];
-    for (const { file } of images) {
-      const path = `posts/${uid}/${Date.now()}_${file.name}`;
-      const storageRef = ref(storage, path);
-      await uploadBytes(storageRef, file);
-      const url = await getDownloadURL(storageRef);
-      urls.push(url);
-    }
-    return urls;
-  }
-
-  async function handleSubmit(e) {
-    e.preventDefault();
-    setError("");
-
-    if (!title.trim()) return setError("Title is required.");
-    if (!body.trim())  return setError("Post content is required.");
-    if (!categorySlug) return setError("Please select a category.");
-
-    setSubmitting(true);
+    setBusy(true);
     try {
-      const imageUrls = images.length > 0 ? await uploadImages(user.uid) : [];
+      const isAnonymous = postAs === "anonymous";
+      const isAlias = postAs === "alias";
+      let authorAlias;
+      if (postAs === "real") authorAlias = realName || user.displayName || "User";
+      else if (postAs === "alias") authorAlias = aliasName;
+      else authorAlias = anonPersona || "Anonymous";
 
-      // Build author display based on identity choice
-      const isAnonymous = identity === "anonymous";
-      const isAlias     = identity === "alias";
-      const authorAlias = isAnonymous ? null
-        : isAlias ? (userDoc?.alias || userDoc?.name || "User")
-        : (userDoc?.name || user.displayName || "User");
-
-      const selectedCat = categories.find((c) => c.slug === categorySlug);
-
-      const docRef = await addDoc(collection(db, "posts"), {
-        title: title.trim(),
-        body: body.trim(),
-        categorySlug,
-        categoryName: selectedCat?.name || "",
-        authorUid: user.uid,
-        authorAlias,
-        isAnonymous,
-        isAlias,
-        images: imageUrls,
-        upvotes: 0,
-        downvotes: 0,
-        commentsCount: 0,
-        views: 0,
-        shares: 0,
-        status: "active",
-        createdAt: serverTimestamp(),
-        updatedAt: serverTimestamp(),
+      const id = await createPost({
+        uid: user.uid, title, body, categorySlug,
+        categoryName: selectedCat?.name || "Posts",
+        isAnonymous, isAlias, alias: authorAlias,
       });
-
-      router.push(`/post/${docRef.id}`);
-    } catch (err) {
-      console.error(err);
-      setError("Something went wrong. Please try again.");
+      router.push(`/post/${id}`);
+    } catch (e) {
+      setErr(e.message || "Failed to post. Please try again.");
     } finally {
-      setSubmitting(false);
+      setBusy(false);
     }
   }
-
-  const canAddMore = images.length < MAX_IMAGES;
 
   return (
     <Shell>
-      <div className="max-w-2xl mx-auto">
-        <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="card p-5">
+        <div className="text-xl font-bold text-white mb-1">Create a Post</div>
+        <p className="text-sm text-white/50 mb-5">Share anything. Choose how you want to appear.</p>
 
-          {/* Identity Selector */}
-          <div className="card p-5">
-            <div className="text-sm font-semibold text-white mb-3">Post as</div>
-            <div className="grid grid-cols-3 gap-2">
-              {IDENTITY_OPTIONS.map(({ key, icon: Icon, label, desc, color, activeColor }) => (
-                <button
-                  key={key}
-                  type="button"
-                  onClick={() => setIdentity(key)}
-                  className={`rounded-xl border p-3 text-left transition ${
-                    identity === key ? activeColor : color
-                  }`}
-                >
-                  <Icon className={`h-5 w-5 mb-2 ${
-                    identity === key
-                      ? key === "alias" ? "text-blue-400" : key === "anonymous" ? "text-purple-400" : "text-white"
-                      : "text-white/40"
-                  }`} />
-                  <div className={`text-sm font-semibold ${identity === key ? "text-white" : "text-white/60"}`}>{label}</div>
-                  <div className="text-xs text-white/30 mt-0.5 leading-tight">{desc}</div>
-                </button>
-              ))}
-            </div>
-            {identity !== "realname" && (
-              <div className="mt-3 rounded-xl bg-white/5 border border-white/10 px-3 py-2 text-xs text-white/50">
-                {identity === "alias"
-                  ? `Posting as alias: "${userDoc?.alias || userDoc?.name || "User"}"`
-                  : "Posting anonymously — no name or profile link will be shown."}
-              </div>
-            )}
+        {!user ? (
+          <div className="text-center py-8">
+            <div className="text-3xl mb-3">🔐</div>
+            <p className="text-white/60 text-sm mb-4">You need to be signed in to post.</p>
+            <button onClick={login} className="rounded-full bg-white px-6 py-2.5 text-sm font-bold text-black hover:bg-neutral-200 transition">
+              Continue with Google
+            </button>
           </div>
+        ) : (
+          <div className="space-y-4">
 
-          {/* Title + Category */}
-          <div className="card p-5 space-y-4">
+            {/* Post As selector */}
             <div>
-              <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Title</label>
-              <input
-                id="postTitle"
-                name="postTitle"
-                className="input mt-1 text-base"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="What's on your mind?"
-                maxLength={200}
-              />
-              <div className="text-right text-xs text-white/20 mt-1">{title.length}/200</div>
+              <label className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-2 block">Post As</label>
+              <div className="grid grid-cols-3 gap-2">
+                {identityOptions.map((opt) => {
+                  const { Icon } = opt;
+                  const sel = postAs === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      onClick={() => setPostAs(opt.value)}
+                      className={`rounded-xl border p-3 text-left transition ${
+                        sel ? `${opt.borderSel} ${opt.bgSel}` : "border-white/10 hover:border-white/30 hover:bg-white/5"
+                      }`}
+                    >
+                      <Icon className={`h-5 w-5 mb-1.5 ${sel ? opt.color : "text-white/40"}`} />
+                      <div className={`text-xs font-semibold ${sel ? "text-white" : "text-white/70"}`}>{opt.label}</div>
+                      <div className={`text-xs mt-0.5 truncate ${opt.notSet ? "text-red-400/70" : "text-white/40"}`}>{opt.desc}</div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              {/* Hint bar */}
+              {activeOpt && (
+                <div className={`mt-2 rounded-lg px-3 py-2 text-xs flex items-center gap-2 ${
+                  needsAlias
+                    ? "bg-red-500/10 text-red-400 border border-red-500/20"
+                    : `${activeOpt.bgSel} ${activeOpt.color} border ${activeOpt.borderSel}`
+                }`}>
+                  <span className="flex-1">{activeOpt.hint}</span>
+                  {(needsAlias || needsAnon) && (
+                    <Link href="/profile/settings" className="underline font-semibold whitespace-nowrap hover:opacity-80">
+                      Go to settings →
+                    </Link>
+                  )}
+                </div>
+              )}
             </div>
 
+            {/* Title */}
             <div>
-              <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Category</label>
-              <select
-                id="category"
-                name="category"
-                className="input mt-1"
-                value={categorySlug}
-                onChange={(e) => setCategorySlug(e.target.value)}
-              >
+              <div className="flex items-center justify-between mb-1">
+                <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Post Title *</label>
+                <span className={`text-xs ${title.length > 180 ? "text-red-400" : "text-white/30"}`}>{title.length}/{titleLimit}</span>
+              </div>
+              <input
+                className="input"
+                value={title}
+                onChange={(e) => setTitle(e.target.value.slice(0, titleLimit))}
+                placeholder="What's on your mind?"
+              />
+            </div>
+
+            {/* Category */}
+            <div>
+              <label className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-1 block">Category *</label>
+              <select className="select" value={categorySlug} onChange={(e) => setCategorySlug(e.target.value)}>
                 <option value="">Select a category...</option>
-                {categories.map((c) => (
-                  <option key={c.slug} value={c.slug}>{c.icon} {c.name}</option>
-                ))}
+                {cats.map((c) => <option key={c.id} value={c.slug}>{c.name}</option>)}
               </select>
             </div>
 
+            {/* Content */}
             <div>
-              <label className="text-xs font-semibold text-white/50 uppercase tracking-wider">Content</label>
+              <label className="text-xs font-semibold text-white/50 uppercase tracking-wider mb-1 block">Content *</label>
               <textarea
-                id="postBody"
-                name="postBody"
-                className="textarea mt-1"
-                rows={6}
+                className="textarea"
+                rows={10}
                 value={body}
                 onChange={(e) => setBody(e.target.value)}
-                placeholder="Share your thoughts, story, or question..."
+                placeholder="Share your thoughts, story, or question…"
               />
-              <div className="text-right text-xs text-white/20 mt-1">{body.length} chars</div>
-            </div>
-          </div>
-
-          {/* Image Upload */}
-          <div className="card p-5">
-            <div className="flex items-center justify-between mb-3">
-              <div className="text-sm font-semibold text-white">Images</div>
-              <div className="text-xs text-white/30">{images.length}/{MAX_IMAGES} — max {MAX_SIZE_MB}MB each</div>
             </div>
 
-            {/* Preview grid */}
-            {images.length > 0 && (
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                {images.map(({ preview }, i) => (
-                  <div key={i} className="relative rounded-xl overflow-hidden aspect-video bg-white/5">
-                    <img src={preview} alt="" className="w-full h-full object-cover" />
-                    <button
-                      type="button"
-                      onClick={() => removeImage(i)}
-                      className="absolute top-1.5 right-1.5 w-6 h-6 rounded-full bg-black/70 flex items-center justify-center text-white hover:bg-black transition"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </div>
-                ))}
-              </div>
+            {err && (
+              <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">{err}</div>
             )}
 
-            {/* Drop zone */}
-            {canAddMore && (
-              <div
-                onDrop={handleDrop}
-                onDragOver={(e) => e.preventDefault()}
-                onClick={() => fileInputRef.current?.click()}
-                className="rounded-xl border border-dashed border-white/20 hover:border-white/40 bg-white/[0.02] hover:bg-white/5 transition cursor-pointer p-6 text-center"
-              >
-                <ImagePlus className="h-7 w-7 text-white/20 mx-auto mb-2" />
-                <div className="text-sm text-white/40">
-                  {images.length === 0 ? "Add up to 2 images" : "Add 1 more image"}
-                </div>
-                <div className="text-xs text-white/20 mt-1">Click or drag & drop • JPG, PNG, GIF, WebP • Max {MAX_SIZE_MB}MB</div>
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  multiple
-                  className="hidden"
-                  onChange={(e) => { addImages(e.target.files); e.target.value = ""; }}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Error */}
-          {error && (
-            <div className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
-              {error}
-            </div>
-          )}
-
-          {/* Submit */}
-          <div className="flex gap-3">
-            <button type="button" onClick={() => router.back()}
-              className="rounded-full border border-white/20 px-5 py-2.5 text-sm text-white/60 hover:bg-white/10 transition">
-              Cancel
+            <button
+              onClick={submit}
+              disabled={busy || needsAlias}
+              className="w-full rounded-full bg-white py-3 text-sm font-bold text-black hover:bg-neutral-200 transition disabled:opacity-50"
+            >
+              {busy ? "Posting…" : "🚀 Post"}
             </button>
-            <button type="submit" disabled={submitting}
-              className="flex-1 rounded-full bg-white py-2.5 text-sm font-bold text-black hover:bg-neutral-200 transition disabled:opacity-50 flex items-center justify-center gap-2">
-              {submitting ? <><Loader2 className="h-4 w-4 animate-spin" /> Posting...</> : "Publish Post"}
-            </button>
+
+            <p className="text-xs text-white/30 text-center">
+              By posting, you agree to our{" "}
+              <a href="/rules" className="underline hover:text-white">Rules</a> and{" "}
+              <a href="/terms" className="underline hover:text-white">Terms</a>.
+            </p>
           </div>
-        </form>
+        )}
       </div>
     </Shell>
   );
